@@ -306,3 +306,4 @@ dependencies:
       - urllib3==2.0.7
       - xtb==22.1
 prefix: /home/xchen286/miniconda3/envs/mol_discovery_env
+
