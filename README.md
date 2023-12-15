@@ -2,7 +2,6 @@
 
 [![CI](https://github.com/ssec-jhu/bluephos/actions/workflows/ci.yml/badge.svg)](https://github.com/ssec-jhu/bluephos/actions/workflows/ci.yml)
 [![Documentation Status](https://readthedocs.org/projects/ssec-jhu-bluephos/badge/?version=latest)](https://ssec-jhu-bluephos.readthedocs.io/en/latest/?badge=latest)
-[![codecov](https://codecov.io/gh/ssec-jhu/bluephos/branch/main/graph/badge.svg?token=0KPNKHRC2V)](https://codecov.io/gh/ssec-jhu/bluephos)
 [![Security](https://github.com/ssec-jhu/bluephos/actions/workflows/security.yml/badge.svg)](https://github.com/ssec-jhu/bluephos/actions/workflows/security.yml)
 <!---[![DOI](https://zenodo.org/badge/<insert_ID_number>.svg)](https://zenodo.org/badge/latestdoi/<insert_ID_number>) --->
 
