@@ -1,9 +1,8 @@
-# SSEC-JHU <package_name>
+# SSEC-JHU bluephos
 
-[![CI](https://github.com/ssec-jhu/base-template/actions/workflows/ci.yml/badge.svg)](https://github.com/ssec-jhu/base-template/actions/workflows/ci.yml)
-[![Documentation Status](https://readthedocs.org/projects/ssec-jhu-base-template/badge/?version=latest)](https://ssec-jhu-base-template.readthedocs.io/en/latest/?badge=latest)
-[![codecov](https://codecov.io/gh/ssec-jhu/base-template/branch/main/graph/badge.svg?token=0KPNKHRC2V)](https://codecov.io/gh/ssec-jhu/base-template)
-[![Security](https://github.com/ssec-jhu/base-template/actions/workflows/security.yml/badge.svg)](https://github.com/ssec-jhu/base-template/actions/workflows/security.yml)
+[![CI](https://github.com/ssec-jhu/bluephos/actions/workflows/ci.yml/badge.svg)](https://github.com/ssec-jhu/bluephos/actions/workflows/ci.yml)
+[![Documentation Status](https://readthedocs.org/projects/ssec-jhu-bluephos/badge/?version=latest)](https://ssec-jhu-bluephos.readthedocs.io/en/latest/?badge=latest)
+[![Security](https://github.com/ssec-jhu/bluephos/actions/workflows/security.yml/badge.svg)](https://github.com/ssec-jhu/bluephos/actions/workflows/security.yml)
 <!---[![DOI](https://zenodo.org/badge/<insert_ID_number>.svg)](https://zenodo.org/badge/latestdoi/<insert_ID_number>) --->
 
 
