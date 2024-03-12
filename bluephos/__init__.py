@@ -1,1 +1,0 @@
-__project__ = 'bluephos'

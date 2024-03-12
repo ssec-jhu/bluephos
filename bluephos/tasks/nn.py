@@ -55,8 +55,8 @@ def init_weights(m):
 
 
 def new_model(n_atom_feature, condition):
-    dim = condition["dim"]
-    dropout = condition["dropout"]
+    # dim = condition["dim"]
+    # dropout = condition["dropout"]
     model = Net(n_atom_feature, condition["dim"], condition["dropout"], 1)
     model.apply(init_weights)
     return model

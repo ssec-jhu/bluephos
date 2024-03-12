@@ -3,7 +3,6 @@ BluePhos Discovery Pipeline
 """
 
 import pandas as pd
-import os
 import argparse
 from dplutils.pipeline.ray import RayDataPipelineExecutor
 from tasks.generateligandtable import generate_ligand_table, GenerateLigandTableTask
