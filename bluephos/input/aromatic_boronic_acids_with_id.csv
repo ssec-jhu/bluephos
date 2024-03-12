@@ -1,0 +1,10 @@
+acid_identifier,acid_SMILES
+A1,B(C1=CC(=CC=C1)[N+](=O)[O-])(O)O
+A2,B1(OCCCO1)C2=CC=CC=C2
+A3,B(C1=CC=CC=C1C)(O)O
+A4,B(C1=CC(=CC=C1)C)(O)O
+A5,B(C1=CC=C(C=C1)C)(O)O
+A6,B(C1=CC=C(C=C1)C=C)(O)O
+A7,B(C1=CC=C(C=C1)OC)(O)O
+A8,B(C1=CC=CC=C1C=O)(O)O
+A9,B(C1=CC=C(C=C1)C=O)(O)O

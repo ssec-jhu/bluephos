@@ -2,8 +2,8 @@ import pandas as pd
 from tqdm import tqdm
 from rdkit.Chem import AllChem
 from rdkit import Chem
-from rdkit.Chem import Descriptors
-from rdkit.Chem import rdqueries
+# from rdkit.Chem import Descriptors
+# from rdkit.Chem import rdqueries
 import os
 from pathlib import Path
 from dplutils.pipeline import PipelineTask

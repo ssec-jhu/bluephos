@@ -12,7 +12,7 @@ from tasks.cauldron2feature import feature_create, Cauldron2FeatureTask
 from tasks.nn import apply_nn, NNTask
 
 # Toggle execution mode: True for Ray's distributed processing, False for local testing and debugging.
-ray_enabled = True
+ray_enabled = False
 
 
 def get_pipeline(halides_file_name, acids_file_name, input_folder, output_folder):
@@ -50,7 +50,7 @@ def test_pipeline(halides_file_name, acids_file_name, input_folder, output_folde
     print("Smiles2Mol Task completed!")
 
     feature_df = feature_create(smiles_to_mol_df, input_folder, output_folder)
-    print("feature Task completed!")
+    print("Feature Task completed!")
 
     nn_score_df = apply_nn(feature_df, input_folder, output_folder)
     print("NN Task completed!")
