@@ -24,10 +24,9 @@ class Net(t.nn.Module):
         self.embed2 = t.nn.Linear(dim, dim)
         self.m = Dropout(p=dropout)
         # Smaller dropout for the last layer
-        self.m_small = Dropout(p=min(dropout, .2))
+        self.m_small = Dropout(p=min(dropout, 0.2))
 
-        self.conv_layers = GCN(dim, dim, n_conv_layers, dim,
-                               dropout=dropout)
+        self.conv_layers = GCN(dim, dim, n_conv_layers, dim, dropout=dropout)
 
         self.set2set = Set2Set(dim, processing_steps=steps)
         self.lin1 = t.nn.Linear(2 * dim, dim)
@@ -49,9 +48,11 @@ class Net(t.nn.Module):
         out = self.lin2(out)
         return out
 
+
 def init_weights(m):
     if type(m) == t.nn.Linear:
         kaiming_normal_(m.weight, nonlinearity="relu", mode="fan_out")
+
 
 def new_model(n_atom_feature, condition):
     dim = condition["dim"]
@@ -60,15 +61,26 @@ def new_model(n_atom_feature, condition):
     model.apply(init_weights)
     return model
 
+
 def apply_nn(feature_df: pd.DataFrame, input_folder, output_folder) -> pd.DataFrame:
     # Load the pre-trained model
-    condition_dicts = [{"name": "widewithdropoutlr1e-4", "lr": 1e-4, "dim": 100, "dropout": 0.5, "batch_size": .1}]
+    condition_dicts = [
+        {
+            "name": "widewithdropoutlr1e-4",
+            "lr": 1e-4,
+            "dim": 100,
+            "dropout": 0.5,
+            "batch_size": 0.1,
+        }
+    ]
     n_atom_feature = 21  # Assuming this is needed here
 
     model = new_model(n_atom_feature, condition_dicts[0])
-    model.load_state_dict(t.load(os.path.join(input_folder, "full_energy_model_weights.pt")))
+    model.load_state_dict(
+        t.load(os.path.join(input_folder, "full_energy_model_weights.pt"))
+    )
 
-    pred_mols = feature_df['Molecule'].tolist()
+    pred_mols = feature_df["Molecule"].tolist()
     pred_data = [mol.get_torchgeom() for mol in pred_mols]
 
     # Make predictions
@@ -85,7 +97,10 @@ def apply_nn(feature_df: pd.DataFrame, input_folder, output_folder) -> pd.DataFr
 
     # Saving the predictions
     nn_predictions = pd.concat(dataframes)
-    nn_predictions.to_csv("ml_predictions.csv", index=False)
+    nn_predictions.to_csv(
+        os.path.join(output_folder, "ml_predictions.csv"), index=False
+    )
     return nn_predictions
 
-NNTask = PipelineTask('apply_nn', apply_nn, num_gpus=0, batch_size=1)
+
+NNTask = PipelineTask("apply_nn", apply_nn, num_gpus=0, batch_size=1)
