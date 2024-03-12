@@ -103,4 +103,10 @@ def apply_nn(feature_df: pd.DataFrame, input_folder, output_folder) -> pd.DataFr
     return nn_predictions
 
 
-NNTask = PipelineTask("apply_nn", apply_nn, num_gpus=0, batch_size=1)
+NNTask = PipelineTask(
+    "apply_nn",
+    apply_nn,
+    context_kwargs={"input_folder": "input_folder", "output_folder": "output_folder"},
+    num_gpus=0,
+    batch_size=1,
+)

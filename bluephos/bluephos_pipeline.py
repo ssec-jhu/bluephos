@@ -12,7 +12,7 @@ from tasks.cauldron2feature import feature_create, Cauldron2FeatureTask
 from tasks.nn import apply_nn, NNTask
 
 # Toggle execution mode: True for Ray's distributed processing, False for local testing and debugging.
-ray_enabled = False
+ray_enabled = True
 
 
 def get_pipeline(halides_file_name, acids_file_name, input_folder, output_folder):
