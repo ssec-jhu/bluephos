@@ -9,6 +9,7 @@ from torch_geometric.loader import DataLoader
 import pandas as pd
 import os
 from dplutils.pipeline import PipelineTask
+from tasks.cauldron2feature import feature_create
 
 
 class Net(t.nn.Module):
@@ -73,6 +74,8 @@ def apply_nn(feature_df: pd.DataFrame, input_folder, output_folder) -> pd.DataFr
             "batch_size": 0.1,
         }
     ]
+    # print(feature_df["Molecule"].columns)
+    # print(len(feature_df["Molecule"].columns))
     n_atom_feature = 21  # Assuming this is needed here
 
     model = new_model(n_atom_feature, condition_dicts[0])
@@ -80,13 +83,16 @@ def apply_nn(feature_df: pd.DataFrame, input_folder, output_folder) -> pd.DataFr
         t.load(os.path.join(input_folder, "full_energy_model_weights.pt"))
     )
 
+    model.eval()
+    
     pred_mols = feature_df["Molecule"].tolist()
     pred_data = [mol.get_torchgeom() for mol in pred_mols]
 
     # Make predictions
     dataframes = []
     # Breaking it into batches to avoid running out of memory
-    loader = DataLoader(pred_data, batch_size=200)
+    # loader = DataLoader(pred_data, batch_size=200)
+    loader = DataLoader(pred_data)
     # Turning off gradient evaluation to speed it up
     with t.no_grad():
         for batch in loader:
@@ -103,10 +109,16 @@ def apply_nn(feature_df: pd.DataFrame, input_folder, output_folder) -> pd.DataFr
     return nn_predictions
 
 
+def nn(mol_df: pd.DataFrame, input_folder, output_folder) -> pd.DataFrame:
+    feature_df = feature_create(mol_df, input_folder, output_folder)
+    nn_df = apply_nn(feature_df, input_folder, output_folder)
+    
+    return nn_df
+
 NNTask = PipelineTask(
-    "apply_nn",
-    apply_nn,
+    "nn",
+    nn,
     context_kwargs={"input_folder": "input_folder", "output_folder": "output_folder"},
     num_gpus=0,
-    batch_size=1,
+    batch_size=100,
 )

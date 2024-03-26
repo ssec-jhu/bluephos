@@ -6,9 +6,10 @@ from rdkit.Chem.rdmolfiles import SDWriter
 from rdkit.Chem.rdmolops import CombineMols, SanitizeMol, Kekulize
 from functools import reduce
 from dplutils.pipeline import PipelineTask
+import ray
 
 
-def smiles_to_mols(df: pd.DataFrame, output_folder) -> pd.DataFrame:
+def smiles_to_sdf(df: pd.DataFrame, output_folder) -> pd.DataFrame:
 
     # Adjusted 'ligate' function to include necessary imports
     def ligate(ligands, metal_atom_element="Ir", metal_atom=None):
@@ -67,30 +68,27 @@ def smiles_to_mols(df: pd.DataFrame, output_folder) -> pd.DataFrame:
 
     # Initialize an empty list to hold the RDKit molecule objects
     molecules = []
+    # with SDWriter(os.path.join(output_folder, "pipeline_example_mols.sdf")) as writer:
+    # writer.SetForceV3000(True)
 
-    with SDWriter(os.path.join(output_folder, "pipeline_example_mols.sdf")) as writer:
-        writer.SetForceV3000(True)
-
-        for index, row in df.iterrows():  # Assuming df is a DataFrame
-            ligand = MolFromSmiles(row["ligand_SMILES"])
-            if ligand is not None:
-                ligated_mol = ligate([ligand, ligand, ligand])
-                if ligated_mol is not None:
-                    mol = AddHs(ligated_mol)
-                    AllChem.Compute2DCoords(
-                        mol
-                    )  # Compute 2D coordinates for the molecule
-                    mol.SetProp("_Name", row["ligand_identifier"])
-                    molecules.append(mol)
-                    writer.write(mol)
-                else:
-                    # Handle the case where ligate returns None
-                    print(
-                        f"Ligation failed for index {index}, identifier {row['ligand_identifier']}."
-                    )
-                    # molecules.append(None)
-            # else:
-            # molecules.append(None)
+    for index, row in df.iterrows():  # Assuming df is a DataFrame
+        ligand = MolFromSmiles(row["ligand_SMILES"])
+        if ligand is not None:
+            ligated_mol = ligate([ligand, ligand, ligand])
+            if ligated_mol is not None:
+                mol = AddHs(ligated_mol)
+                AllChem.Compute2DCoords(mol)  # Compute 2D coordinates for the molecule
+                mol.SetProp("_Name", row["ligand_identifier"])
+                molecules.append(mol)
+                # writer.write(mol)
+            else:
+                # Handle the case where ligate returns None
+                print(
+                    f"Ligation failed for index {index}, identifier {row['ligand_identifier']}."
+                )
+        #         molecules.append(None)
+        # else:
+        #     molecules.append(None)
 
     # Create a DataFrame to return
     result_df = pd.DataFrame(
@@ -99,11 +97,16 @@ def smiles_to_mols(df: pd.DataFrame, output_folder) -> pd.DataFrame:
         }
     )
 
+    # For Verification
+    for rdkit_mol in result_df["molecules"]:
+        mol_block = Chem.MolToMolBlock(rdkit_mol)
+        print(mol_block)
+
     return result_df
 
 
-Smiles2MolTask = PipelineTask(
+Smiles2SDFTask = PipelineTask(
     "smiles2mol",
-    smiles_to_mols,
+    smiles_to_sdf,
     context_kwargs={"output_folder": "output_folder"},
 )

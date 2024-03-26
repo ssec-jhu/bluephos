@@ -2,8 +2,10 @@ import pandas as pd
 from tqdm import tqdm
 from rdkit.Chem import AllChem
 from rdkit import Chem
+
 # from rdkit.Chem import Descriptors
 # from rdkit.Chem import rdqueries
+import ray
 import os
 from pathlib import Path
 from dplutils.pipeline import PipelineTask
@@ -43,75 +45,68 @@ def add_dummy_atoms(smiles):
 
 
 def generate_ligand_table(
-    inputs: pd.DataFrame,
-    halides_file_name,
-    acids_file_name,
-    input_folder,
-    output_folder,
+    ligand_pair_df: pd.DataFrame,
+    # ligand_pair_generator
+    # input_folder,
+    # output_folder,
 ) -> pd.DataFrame:
-
-    halide_df = pd.read_csv(os.path.join(input_folder, halides_file_name))
-    acid_df = pd.read_csv(os.path.join(input_folder, acids_file_name))
-
-    print("read halide and acid successfully")
 
     result_data = []  # List to store the output data
 
-    for _, halide_row in tqdm(halide_df.iterrows(), total=len(halide_df)):
-        for _, acid_row in acid_df.iterrows():
-            ligand_set = suzuki_couple(
-                acid_row["acid_SMILES"], halide_row["halide_SMILES"]
+    print(ligand_pair_df.columns)
+    for _, ligand_pair in ligand_pair_df.iterrows():
+        # for ligand_pair in ligand_pair_generator:
+        # acid = ligand_pair["acid"]
+        # halide = ligand_pair["halide"]
+        ligand_set = suzuki_couple(
+            ligand_pair["acid_SMILES"], ligand_pair["halide_SMILES"]
+        )
+
+        ligands_with_binding_sites = []
+        for ligand_smiles in ligand_set:
+            ligands_with_binding_sites = ligands_with_binding_sites + add_dummy_atoms(
+                ligand_smiles
             )
 
-            ligands_with_binding_sites = []
-            for ligand_smiles in ligand_set:
-                ligands_with_binding_sites = (
-                    ligands_with_binding_sites + add_dummy_atoms(ligand_smiles)
-                )
+        # If the set is empty, do nothing
+        if not ligands_with_binding_sites:
+            continue
 
-            # If the set is empty, do nothing
-            if not ligands_with_binding_sites:
-                continue
-
-            # Convert each ligand in the set to a row in the DataFrame and append to the list
-            for i, ligand in enumerate(ligands_with_binding_sites):
-                ligand_identifier = (
-                    halide_row["halide_identifier"]
-                    + acid_row["acid_identifier"]
-                    + "L"
-                    + hex(i)[2:]
-                )
-                result_data.append(
-                    {
-                        "ligand_identifier": ligand_identifier,
-                        "ligand_SMILES": ligand,
-                        "halide_identifier": halide_row["halide_identifier"],
-                        "halide_SMILES": halide_row["halide_SMILES"],
-                        "acid_identifier": acid_row["acid_identifier"],
-                        "acid_SMILES": acid_row["acid_SMILES"],
-                    }
-                )
+        # Convert each ligand in the set to a row in the DataFrame and append to the list
+        for i, ligand in enumerate(ligands_with_binding_sites):
+            ligand_identifier = (
+                ligand_pair["halide_identifier"]
+                + ligand_pair["acid_identifier"]
+                + "L"
+                + hex(i)[2:]
+            )
+            result_data.append(
+                {
+                    "ligand_identifier": ligand_identifier,
+                    "ligand_SMILES": ligand,
+                    "halide_identifier": ligand_pair["halide_identifier"],
+                    "halide_SMILES": ligand_pair["halide_SMILES"],
+                    "acid_identifier": ligand_pair["acid_identifier"],
+                    "acid_SMILES": ligand_pair["acid_SMILES"],
+                }
+            )
 
     # Create the output folder if it doesn't exist
-    Path(output_folder).mkdir(parents=True, exist_ok=True)
+    # Path(output_folder).mkdir(parents=True, exist_ok=True)
 
     # Create the DataFrame using the list of data
     result_df = pd.DataFrame(result_data)
 
-    result_df.to_csv(
-        os.path.join(output_folder, "combinatorial_ligands.csv"), index=False
-    )
+    # result_df.to_csv(
+    #     os.path.join(output_folder, "combinatorial_ligands.csv"), index=False
+    # )
 
     return result_df
+
 
 
 GenerateLigandTableTask = PipelineTask(
     "generate_ligand_table",
     generate_ligand_table,
-    context_kwargs={
-        "halides_file_name": "halides_file_name",
-        "acids_file_name": "acids_file_name",
-        "input_folder": "input_folder",
-        "output_folder": "output_folder",
-    },
+
 )

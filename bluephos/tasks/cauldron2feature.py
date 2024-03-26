@@ -1,7 +1,7 @@
 import pandas as pd
 import os
-from tasks.cauldronoid import rdkit2cauldronoid, mols2files, mols2tables, tables2mols
-from rdkit.Chem import AddHs
+from tasks.cauldronoid import rdkit2cauldronoid, mols2files, mols2tables, tables2mols, molecule_table
+from rdkit.Chem import AddHs, MolToSmiles, MolToMolBlock
 from dplutils.pipeline import PipelineTask
 
 
@@ -9,6 +9,18 @@ def make_cauldron(df_mols: pd.DataFrame) -> dict:
 
     # Get RDKit Mol objects
     rdkit_mols = df_mols["molecules"]
+    
+    # Printing SMILES representation
+    # for rdkit_mol in rdkit_mols:
+    #     smiles = MolToSmiles(rdkit_mol)
+    #     # mol_table = molecule_table(rdkit_mol)
+    #     print(smiles)
+        
+    # Printing detailed MolBlock representation
+    for rdkit_mol in rdkit_mols:
+        mol_block = MolToMolBlock(rdkit_mol)
+        print(mol_block)
+    
 
     # Convert RDKit Mol objects to cauldronoid objects
     cauldron = [rdkit2cauldronoid(AddHs(rdkit_mol)) for rdkit_mol in rdkit_mols]
@@ -18,6 +30,10 @@ def make_cauldron(df_mols: pd.DataFrame) -> dict:
 
     # Convert Cauldronoid objects back to tables
     molecule_table, one_atom_table, two_atom_table = mols2tables(cauldron)
+    
+    print(molecule_table)
+    
+    # print(molecule_table)
 
     cauldron_df = {
         "molecule_table": molecule_table,
@@ -40,6 +56,13 @@ def join_feature(cauldron_df: dict, input_folder, output_folder) -> pd.DataFrame
     synthetic_mols, synthetic_one_atom, synthetic_two_atom = cauldron_df.values()
 
     synthetic_mols = cauldron_df["molecule_table"]
+    
+    # print(synthetic_mols)
+    # print(element_features.columns)
+    # print(train_stats.columns)
+    print(cauldron_df.keys())
+    print(cauldron_df["molecule_table"])
+    print(cauldron_df["one_atom_table"])
 
     # Join in element features for atoms
     synthetic_one_atom = (
@@ -95,6 +118,6 @@ Cauldron2FeatureTask = PipelineTask(
     "cauldron2feature",
     feature_create,
     context_kwargs={"input_folder": "input_folder", "output_folder": "output_folder"},
-    num_gpus=0,
-    batch_size=1,
+    # num_gpus=1,
+    batch_size=2,
 )
