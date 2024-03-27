@@ -72,10 +72,10 @@ def test_pipeline(halides_file_name, acids_file_name, input_folder, output_folde
     ligand_table_df = generate_ligand_table(ligand_pairs)
     print("GenerateLigandTable Task completed!")
 
-    smiles_to_mol_df = smiles_to_sdf(ligand_table_df, output_folder)
-    print("Smiles2Mol Task completed!")
+    smiles_to_sdf_df = smiles_to_sdf(ligand_table_df, output_folder)
+    print("Smiles2SDF Task completed!")
 
-    nn_score_df = nn(smiles_to_mol_df, input_folder, output_folder)
+    nn_score_df = nn(smiles_to_sdf_df, input_folder, output_folder)
     print("NN Task completed!")
 
     # Optionally, return the results for further processing or verification

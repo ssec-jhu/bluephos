@@ -1,12 +1,12 @@
-import os
+# import os
 import pandas as pd
 from rdkit import Chem
 from rdkit.Chem import AddHs, MolFromSmiles, AllChem
-from rdkit.Chem.rdmolfiles import SDWriter
+# from rdkit.Chem.rdmolfiles import SDWriter
 from rdkit.Chem.rdmolops import CombineMols, SanitizeMol, Kekulize
 from functools import reduce
 from dplutils.pipeline import PipelineTask
-import ray
+# import ray
 
 
 def smiles_to_sdf(df: pd.DataFrame, output_folder) -> pd.DataFrame:
@@ -79,7 +79,8 @@ def smiles_to_sdf(df: pd.DataFrame, output_folder) -> pd.DataFrame:
                 mol = AddHs(ligated_mol)
                 AllChem.Compute2DCoords(mol)  # Compute 2D coordinates for the molecule
                 mol.SetProp("_Name", row["ligand_identifier"])
-                molecules.append(mol)
+                # molecules.append(mol)
+                molecules.append(Chem.MolToMolBlock(mol))
                 # writer.write(mol)
             else:
                 # Handle the case where ligate returns None
@@ -98,9 +99,9 @@ def smiles_to_sdf(df: pd.DataFrame, output_folder) -> pd.DataFrame:
     )
 
     # For Verification
-    for rdkit_mol in result_df["molecules"]:
-        mol_block = Chem.MolToMolBlock(rdkit_mol)
-        print(mol_block)
+    # for rdkit_mol in result_df["molecules"]:
+    #     mol_block = Chem.MolToMolBlock(rdkit_mol)
+    #     print(mol_block)
 
     return result_df
 

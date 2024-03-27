@@ -108,5 +108,5 @@ def generate_ligand_table(
 GenerateLigandTableTask = PipelineTask(
     "generate_ligand_table",
     generate_ligand_table,
-
+    batch_size=1,
 )

@@ -1,14 +1,16 @@
 import pandas as pd
 import os
-from tasks.cauldronoid import rdkit2cauldronoid, mols2files, mols2tables, tables2mols, molecule_table
-from rdkit.Chem import AddHs, MolToSmiles, MolToMolBlock
+from tasks.cauldronoid import rdkit2cauldronoid, mols2files, mols2tables, tables2mols
+from rdkit.Chem import AddHs, MolToMolBlock, MolFromMolBlock
+# from rdkit.Chem import MolToSmiles
 from dplutils.pipeline import PipelineTask
 
 
 def make_cauldron(df_mols: pd.DataFrame) -> dict:
 
     # Get RDKit Mol objects
-    rdkit_mols = df_mols["molecules"]
+    # rdkit_mols = df_mols["molecules"]
+    rdkit_mols = df_mols["molecules"].apply(MolFromMolBlock)
     
     # Printing SMILES representation
     # for rdkit_mol in rdkit_mols:
