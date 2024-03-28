@@ -8,7 +8,6 @@ import argparse
 from dplutils.pipeline.ray import RayStreamGraphExecutor
 from tasks.generateligandtable import (
     generate_ligand_table,
-    # ligand_pair_generator,
     GenerateLigandTableTask,
 )
 from tasks.smiles2sdf import smiles_to_sdf, Smiles2SDFTask
@@ -99,13 +98,12 @@ if __name__ == "__main__":
         pipeline = get_pipeline(args.halides, args.acids, args.input, args.output)
 
         output = pipeline.run()
-        # print(output.head(5))
+
         for batch in output:
             print("Batch")
             print(batch.columns)
             print(batch)
-            # for row in batch['molecules']:
-            #     print(row)
+
     else:
         nn_score = test_pipeline(args.halides, args.acids, args.input, args.output)
-        print(nn_score.head(5))
+        print(nn_score)

@@ -1,13 +1,14 @@
 # nn_definition.py
 
+import os
+import pandas as pd
 import torch as t
 import torch.nn.functional as F
-from torch.nn import Dropout
+from torch.nn import Dropout, Linear
 from torch.nn.init import kaiming_normal_
-from torch_geometric.nn import Set2Set, GCN
 from torch_geometric.loader import DataLoader
-import pandas as pd
-import os
+from torch_geometric.nn import GCN, Set2Set
+
 from dplutils.pipeline import PipelineTask
 from tasks.cauldron2feature import feature_create
 
@@ -21,8 +22,8 @@ class Net(t.nn.Module):
         # Number of convolutional layers
         n_conv_layers = 2
 
-        self.embed1 = t.nn.Linear(num_features, dim)
-        self.embed2 = t.nn.Linear(dim, dim)
+        self.embed1 = Linear(num_features, dim)
+        self.embed2 = Linear(dim, dim)
         self.m = Dropout(p=dropout)
         # Smaller dropout for the last layer
         self.m_small = Dropout(p=min(dropout, 0.2))
@@ -56,8 +57,7 @@ def init_weights(m):
 
 
 def new_model(n_atom_feature, condition):
-    # dim = condition["dim"]
-    # dropout = condition["dropout"]
+
     model = Net(n_atom_feature, condition["dim"], condition["dropout"], 1)
     model.apply(init_weights)
     return model
@@ -74,9 +74,15 @@ def apply_nn(feature_df: pd.DataFrame, input_folder, output_folder) -> pd.DataFr
             "batch_size": 0.1,
         }
     ]
-    # print(feature_df["Molecule"].columns)
-    # print(len(feature_df["Molecule"].columns))
-    n_atom_feature = 21  # Assuming this is needed here
+
+    pred_mols = feature_df["Molecule"].tolist()
+    pred_data = [mol.get_torchgeom() for mol in pred_mols]
+
+    # Infer the number of atom features from the input data
+    if pred_data:
+        n_atom_feature = pred_data[0].x.shape[1]
+    else:
+        raise ValueError("No input data found to infer atom features.")
 
     model = new_model(n_atom_feature, condition_dicts[0])
     model.load_state_dict(
@@ -84,15 +90,12 @@ def apply_nn(feature_df: pd.DataFrame, input_folder, output_folder) -> pd.DataFr
     )
 
     model.eval()
-    
-    pred_mols = feature_df["Molecule"].tolist()
-    pred_data = [mol.get_torchgeom() for mol in pred_mols]
 
     # Make predictions
     dataframes = []
-    # Breaking it into batches to avoid running out of memory
-    # loader = DataLoader(pred_data, batch_size=200)
+
     loader = DataLoader(pred_data)
+
     # Turning off gradient evaluation to speed it up
     with t.no_grad():
         for batch in loader:
@@ -103,22 +106,25 @@ def apply_nn(feature_df: pd.DataFrame, input_folder, output_folder) -> pd.DataFr
 
     # Saving the predictions
     nn_predictions = pd.concat(dataframes)
-    nn_predictions.to_csv(
-        os.path.join(output_folder, "ml_predictions.csv"), index=False
-    )
+
     return nn_predictions
 
 
-def nn(mol_df: pd.DataFrame, input_folder, output_folder) -> pd.DataFrame:
-    feature_df = feature_create(mol_df, input_folder, output_folder)
-    nn_df = apply_nn(feature_df, input_folder, output_folder)
-    
-    return nn_df
+def nn(df: pd.DataFrame, input_folder, output_folder) -> pd.DataFrame:
+    df_structure = df[["structure"]].dropna()
+    feature_df = feature_create(df_structure, input_folder, output_folder)
+    nn_score_df = apply_nn(feature_df, input_folder, output_folder)
+
+    score_mapping = nn_score_df.set_index("mol_id")["z"]
+    df["z"] = df["ligand_identifier"].map(score_mapping)
+
+    return df
+
 
 NNTask = PipelineTask(
     "nn",
     nn,
     context_kwargs={"input_folder": "input_folder", "output_folder": "output_folder"},
     num_gpus=0,
-    batch_size=100,
+    batch_size=200,
 )
