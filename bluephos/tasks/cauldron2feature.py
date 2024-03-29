@@ -1,7 +1,7 @@
 import pandas as pd
 import os
-from tasks.cauldronoid import rdkit2cauldronoid, mols2files, mols2tables, tables2mols
-from rdkit.Chem import AddHs, MolToMolBlock, MolFromMolBlock
+from bluephos.tasks.cauldronoid import rdkit2cauldronoid, mols2files, mols2tables, tables2mols
+from rdkit.Chem import AddHs, MolFromMolBlock
 from dplutils.pipeline import PipelineTask
 
 

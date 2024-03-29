@@ -6,7 +6,7 @@ import os
 import pandas as pd
 import argparse
 from dplutils.pipeline.ray import RayStreamGraphExecutor
-from tasks.generateligandtable import (
+from bluephos.tasks.generateligandtable import (
     generate_ligand_table,
     GenerateLigandTableTask,
 )

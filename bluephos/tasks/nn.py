@@ -8,9 +8,9 @@ from torch.nn import Dropout, Linear
 from torch.nn.init import kaiming_normal_
 from torch_geometric.loader import DataLoader
 from torch_geometric.nn import GCN, Set2Set
-
+from bluephos.tasks.cauldron2feature import feature_create
 from dplutils.pipeline import PipelineTask
-from tasks.cauldron2feature import feature_create
+
 
 
 class Net(t.nn.Module):
@@ -125,6 +125,6 @@ NNTask = PipelineTask(
     "nn",
     nn,
     context_kwargs={"input_folder": "input_folder", "output_folder": "output_folder"},
-    num_gpus=0,
+    num_gpus=1,
     batch_size=200,
 )
