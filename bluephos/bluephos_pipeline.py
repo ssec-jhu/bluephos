@@ -32,7 +32,7 @@ def ligand_pair_generator(halides_file_name, acids_file_name, input_folder):
             yield ligand_pair_df
 
 
-def get_pipeline(halides_file_name, acids_file_name, input_folder, output_folder):
+def get_pipeline(halides_file_name, acids_file_name, input_folder, output_folder, element_feature, train_stats):
     steps = [
         GenerateLigandTableTask,
         Smiles2SDFTask,
@@ -50,13 +50,16 @@ def get_pipeline(halides_file_name, acids_file_name, input_folder, output_folder
         "acids_file_name": acids_file_name,
         "input_folder": input_folder,
         "output_folder": output_folder,
+        "element_feature":element_feature,
+        "train_stats":train_stats,
+        
     }
     for key, value in context_dict.items():
         pipeline_executor.set_context(key, value)
     return pipeline_executor
 
 
-def test_pipeline(halides_file_name, acids_file_name, input_folder, output_folder):
+def test_pipeline(halides_file_name, acids_file_name, input_folder, output_folder, element_feature, train_stats):
 
     # Initialize an empty DataFrame to collect generator output
     ligand_pairs = pd.DataFrame()
@@ -74,7 +77,7 @@ def test_pipeline(halides_file_name, acids_file_name, input_folder, output_folde
     smiles_to_sdf_df = smiles_to_sdf(ligand_table_df, output_folder)
     print("Smiles2SDF Task completed!")
 
-    nn_score_df = nn(smiles_to_sdf_df, input_folder, output_folder)
+    nn_score_df = nn(smiles_to_sdf_df, input_folder, output_folder, element_feature, train_stats)
     print("NN Task completed!")
 
     # Optionally, return the results for further processing or verification
@@ -91,11 +94,12 @@ if __name__ == "__main__":
     )
     parser.add_argument("--input", required=True, help="Input folder for the results")
     parser.add_argument("--output", required=True, help="Output folder for the results")
-
+    parser.add_argument("--feature", required=True, help="element feature for the results")
+    parser.add_argument("--train", required=True, help="train stats folder for the results")
     args = parser.parse_args()
 
     if ray_enabled:
-        pipeline = get_pipeline(args.halides, args.acids, args.input, args.output)
+        pipeline = get_pipeline(args.halides, args.acids, args.input, args.output, args.feature, args.train)
 
         output = pipeline.run()
 
@@ -105,5 +109,5 @@ if __name__ == "__main__":
             print(batch)
 
     else:
-        nn_score = test_pipeline(args.halides, args.acids, args.input, args.output)
+        nn_score = test_pipeline(args.halides, args.acids, args.input, args.output, args.feature, args.train)
         print(nn_score)

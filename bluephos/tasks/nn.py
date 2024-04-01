@@ -76,7 +76,7 @@ def apply_nn(feature_df: pd.DataFrame, input_folder, output_folder) -> pd.DataFr
     ]
 
     pred_mols = feature_df["Molecule"].tolist()
-    pred_data = [mol.get_torchgeom() for mol in pred_mols]
+    pred_data = [mol.get_torch_geom_data() for mol in pred_mols]
 
     # Infer the number of atom features from the input data
     if pred_data:
@@ -110,9 +110,9 @@ def apply_nn(feature_df: pd.DataFrame, input_folder, output_folder) -> pd.DataFr
     return nn_predictions
 
 
-def nn(df: pd.DataFrame, input_folder, output_folder) -> pd.DataFrame:
+def nn(df: pd.DataFrame, input_folder, output_folder, element_feature, train_stats) -> pd.DataFrame:
     df_structure = df[["structure"]].dropna()
-    feature_df = feature_create(df_structure, input_folder, output_folder)
+    feature_df = feature_create(df_structure, input_folder, element_feature,train_stats)
     nn_score_df = apply_nn(feature_df, input_folder, output_folder)
 
     score_mapping = nn_score_df.set_index("mol_id")["z"]
@@ -124,7 +124,8 @@ def nn(df: pd.DataFrame, input_folder, output_folder) -> pd.DataFrame:
 NNTask = PipelineTask(
     "nn",
     nn,
-    context_kwargs={"input_folder": "input_folder", "output_folder": "output_folder"},
+    context_kwargs={"input_folder": "input_folder", "output_folder": "output_folder",  "element_feature":"element_feature",
+        "train_stats":"train_stats"},
     num_gpus=1,
     batch_size=200,
 )
