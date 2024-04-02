@@ -262,10 +262,10 @@ def tables2mols(molecule_table, one_atom_table, two_atom_table, special_colnames
 
 
 def join_features(
-    molecule_table, one_atom_table, two_atom_table, input_folder, element_feature, train_stats
+    molecule_table, one_atom_table, two_atom_table, para_folder, element_feature, train_stats
 ) -> pd.DataFrame:
-    element_features = pd.read_csv(os.path.join(input_folder, element_feature))
-    train_stats = pd.read_csv(os.path.join(input_folder, train_stats))
+    element_features = pd.read_csv(os.path.join(para_folder, element_feature))
+    train_stats = pd.read_csv(os.path.join(para_folder, train_stats))
 
     # Join in element features for atoms
     synthetic_one_atom = (
@@ -290,7 +290,7 @@ def join_features(
 
 
 # Main function to create features from molecule data
-def feature_create(mol_df: pd.DataFrame, input_folder, element_feature, train_stats) -> pd.DataFrame:
+def feature_create(mol_df: pd.DataFrame, para_folder, element_feature, train_stats) -> pd.DataFrame:
 
     # Convert the structures in mol_df to RDKit molecules and then to Molecule instances
     rdkit_mols = mol_df["structure"].apply(MolFromMolBlock).apply(AddHs)
@@ -301,7 +301,7 @@ def feature_create(mol_df: pd.DataFrame, input_folder, element_feature, train_st
 
     # Process features and return the result DataFrame
     result_df = join_features(
-        molecule_table, one_atom_table, two_atom_table, input_folder, element_feature, train_stats
+        molecule_table, one_atom_table, two_atom_table, para_folder, element_feature, train_stats
     )
 
     return result_df

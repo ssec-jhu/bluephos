@@ -39,7 +39,7 @@ def ligate(ligands, metal_atom_element="Ir", metal_atom=None):
     return outmol
 
 
-def smiles_to_sdf(df: pd.DataFrame, output_folder) -> pd.DataFrame:
+def smiles_to_sdf(df: pd.DataFrame) -> pd.DataFrame:
     """Convert SMILES strings to SDF format and Add to Input dataframe"""
 
     df["structure"] = None
@@ -60,6 +60,4 @@ def smiles_to_sdf(df: pd.DataFrame, output_folder) -> pd.DataFrame:
     return df
 
 
-Smiles2SDFTask = PipelineTask(
-    "smiles2mol", smiles_to_sdf, context_kwargs={"output_folder": "output_folder"}
-)
+Smiles2SDFTask = PipelineTask("smiles2sdf", smiles_to_sdf)

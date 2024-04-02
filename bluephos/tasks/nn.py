@@ -1,5 +1,3 @@
-# nn_definition.py
-
 import os
 import pandas as pd
 import torch as t
@@ -12,12 +10,9 @@ from bluephos.tasks.cauldron2feature import feature_create
 from dplutils.pipeline import PipelineTask
 
 
-
 class Net(t.nn.Module):
     def __init__(self, num_features, dim, dropout, n_targets):
         super(Net, self).__init__()
-        # Number of set2set processing steps
-        # Named just in case I want to make it an argument
         steps = 2
         # Number of convolutional layers
         n_conv_layers = 2
@@ -25,7 +20,6 @@ class Net(t.nn.Module):
         self.embed1 = Linear(num_features, dim)
         self.embed2 = Linear(dim, dim)
         self.m = Dropout(p=dropout)
-        # Smaller dropout for the last layer
         self.m_small = Dropout(p=min(dropout, 0.2))
 
         self.conv_layers = GCN(dim, dim, n_conv_layers, dim, dropout=dropout)
@@ -63,7 +57,7 @@ def new_model(n_atom_feature, condition):
     return model
 
 
-def apply_nn(feature_df: pd.DataFrame, input_folder, output_folder) -> pd.DataFrame:
+def apply_nn(feature_df: pd.DataFrame, input_folder) -> pd.DataFrame:
     # Load the pre-trained model
     condition_dicts = [
         {
@@ -110,10 +104,10 @@ def apply_nn(feature_df: pd.DataFrame, input_folder, output_folder) -> pd.DataFr
     return nn_predictions
 
 
-def nn(df: pd.DataFrame, input_folder, output_folder, element_feature, train_stats) -> pd.DataFrame:
+def nn(df: pd.DataFrame, para_folder, element_feature, train_stats) -> pd.DataFrame:
     df_structure = df[["structure"]].dropna()
-    feature_df = feature_create(df_structure, input_folder, element_feature,train_stats)
-    nn_score_df = apply_nn(feature_df, input_folder, output_folder)
+    feature_df = feature_create(df_structure, para_folder, element_feature, train_stats)
+    nn_score_df = apply_nn(feature_df, para_folder)
 
     score_mapping = nn_score_df.set_index("mol_id")["z"]
     df["z"] = df["ligand_identifier"].map(score_mapping)
@@ -124,8 +118,11 @@ def nn(df: pd.DataFrame, input_folder, output_folder, element_feature, train_sta
 NNTask = PipelineTask(
     "nn",
     nn,
-    context_kwargs={"input_folder": "input_folder", "output_folder": "output_folder",  "element_feature":"element_feature",
-        "train_stats":"train_stats"},
+    context_kwargs={
+        "para_folder": "para_folder",
+        "element_feature": "element_feature",
+        "train_stats": "train_stats",
+    },
     num_gpus=1,
     batch_size=200,
 )
