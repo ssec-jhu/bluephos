@@ -10,8 +10,8 @@ from bluephos.tasks.generateligandtable import (
     generate_ligand_table,
     GenerateLigandTableTask,
 )
-from tasks.smiles2sdf import smiles_to_sdf, Smiles2SDFTask
-from tasks.nn import nn, NNTask
+from bluephos.tasks.smiles2sdf import smiles_to_sdf, Smiles2SDFTask
+from bluephos.tasks.nn import nn, NNTask
 
 # Toggle execution mode: True for Ray's distributed processing, False for local testing and debugging.
 ray_enabled = True
@@ -53,7 +53,7 @@ def get_pipeline(halides_file_name, acids_file_name, input_folder, output_folder
         "para_folder": para_folder,
         "element_feature":element_feature,
         "train_stats":train_stats,
-        
+
     }
     for key, value in context_dict.items():
         pipeline_executor.set_context(key, value)
