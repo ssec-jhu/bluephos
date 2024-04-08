@@ -1,5 +1,4 @@
 import pandas as pd
-import os
 from rdkit.Chem import AddHs, MolFromMolBlock
 from rdkit.Chem.rdchem import Mol
 from torch_geometric.data import Data
@@ -262,10 +261,10 @@ def tables2mols(molecule_table, one_atom_table, two_atom_table, special_colnames
 
 
 def join_features(
-    molecule_table, one_atom_table, two_atom_table, para_folder, element_feature, train_stats
+    molecule_table, one_atom_table, two_atom_table, element_feature, train_stats
 ) -> pd.DataFrame:
-    element_features = pd.read_csv(os.path.join(para_folder, element_feature))
-    train_stats = pd.read_csv(os.path.join(para_folder, train_stats))
+    element_features = pd.read_csv(element_feature)
+    train_stats = pd.read_csv(train_stats)
 
     # Join in element features for atoms
     synthetic_one_atom = (
@@ -285,12 +284,12 @@ def join_features(
 
     mol_features = tables2mols(molecule_table, synthetic_one_atom, synthetic_two_atom)
 
-    feature_df = pd.DataFrame(mol_features, columns=["Molecule"])
-    return feature_df
+    return(pd.DataFrame(mol_features, columns=["Molecule"]))
+    
 
 
 # Main function to create features from molecule data
-def feature_create(mol_df: pd.DataFrame, para_folder, element_feature, train_stats) -> pd.DataFrame:
+def feature_create(mol_df: pd.DataFrame, element_feature, train_stats) -> pd.DataFrame:
 
     # Convert the structures in mol_df to RDKit molecules and then to Molecule instances
     rdkit_mols = mol_df["structure"].apply(MolFromMolBlock).apply(AddHs)
@@ -301,7 +300,7 @@ def feature_create(mol_df: pd.DataFrame, para_folder, element_feature, train_sta
 
     # Process features and return the result DataFrame
     result_df = join_features(
-        molecule_table, one_atom_table, two_atom_table, para_folder, element_feature, train_stats
+        molecule_table, one_atom_table, two_atom_table, element_feature, train_stats
     )
 
     return result_df

@@ -78,13 +78,11 @@ def generate_ligand_table(
             )
 
     # Create the DataFrame using the list of data
-    df = pd.DataFrame(result_data)
-
-    return df
+    return(pd.DataFrame(result_data))
 
 
 GenerateLigandTableTask = PipelineTask(
     "generate_ligand_table",
     generate_ligand_table,
-    batch_size=1,
+    batch_size=8,
 )

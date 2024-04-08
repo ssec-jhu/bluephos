@@ -1,4 +1,3 @@
-import os
 import pandas as pd
 import torch as t
 import torch.nn.functional as F
@@ -6,7 +5,7 @@ from torch.nn import Dropout, Linear
 from torch.nn.init import kaiming_normal_
 from torch_geometric.loader import DataLoader
 from torch_geometric.nn import GCN, Set2Set
-from bluephos.tasks.cauldron2feature import feature_create
+from bluephos.tasks.sdf2feature import feature_create
 from dplutils.pipeline import PipelineTask
 
 
@@ -57,7 +56,7 @@ def new_model(n_atom_feature, condition):
     return model
 
 
-def apply_nn(feature_df: pd.DataFrame, input_folder) -> pd.DataFrame:
+def apply_nn(feature_df: pd.DataFrame, model_weights) -> pd.DataFrame:
     # Load the pre-trained model
     condition_dicts = [
         {
@@ -79,9 +78,7 @@ def apply_nn(feature_df: pd.DataFrame, input_folder) -> pd.DataFrame:
         raise ValueError("No input data found to infer atom features.")
 
     model = new_model(n_atom_feature, condition_dicts[0])
-    model.load_state_dict(
-        t.load(os.path.join(input_folder, "full_energy_model_weights.pt"))
-    )
+    model.load_state_dict(t.load(model_weights))
 
     model.eval()
 
@@ -104,10 +101,10 @@ def apply_nn(feature_df: pd.DataFrame, input_folder) -> pd.DataFrame:
     return nn_predictions
 
 
-def nn(df: pd.DataFrame, para_folder, element_feature, train_stats) -> pd.DataFrame:
+def nn(df: pd.DataFrame, element_features, train_stats, model_weights) -> pd.DataFrame:
     df_structure = df[["structure"]].dropna()
-    feature_df = feature_create(df_structure, para_folder, element_feature, train_stats)
-    nn_score_df = apply_nn(feature_df, para_folder)
+    feature_df = feature_create(df_structure, element_features, train_stats)
+    nn_score_df = apply_nn(feature_df, model_weights)
 
     score_mapping = nn_score_df.set_index("mol_id")["z"]
     df["z"] = df["ligand_identifier"].map(score_mapping)
@@ -119,9 +116,9 @@ NNTask = PipelineTask(
     "nn",
     nn,
     context_kwargs={
-        "para_folder": "para_folder",
-        "element_feature": "element_feature",
+        "element_features": "element_features",
         "train_stats": "train_stats",
+        "model_weights": "model_weights",
     },
     num_gpus=1,
     batch_size=200,
