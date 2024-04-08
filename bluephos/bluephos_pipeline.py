@@ -29,7 +29,6 @@ def get_pipeline(
     element_features,
     train_stats,
     model_weights,
-    out_dir,
 ):
     steps = [
         GenerateLigandTableTask,
@@ -47,7 +46,6 @@ def get_pipeline(
         "element_features": element_features,
         "train_stats": train_stats,
         "model_weights": model_weights,
-        "out_dir": out_dir,
     }
     for key, value in context_dict.items():
         pipeline_executor.set_context(key, value)
@@ -63,7 +61,6 @@ if __name__ == "__main__":
     ap.add_argument("--features", required=True, help="Element feature file")
     ap.add_argument("--train", required=True, help="Train stats file")
     ap.add_argument("--weights", required=True, help="Full energy model weights")
-    ap.add_argument("--outdir", required=True, help="Writing results to parquet table")
     args = ap.parse_args()
 
     cli.cli_run(
@@ -73,7 +70,6 @@ if __name__ == "__main__":
             args.features,
             args.train,
             args.weights,
-            args.out_dir,
         ),
         args,
     )

@@ -10,7 +10,6 @@ def mock_args():
     features = 'bluephos/parameters/element_features.csv'
     train = 'bluephos/parameters/train_stats.csv'
     weights = 'bluephos/parameters/full_energy_model_weights.pt'
-    out_dir = 'tests/out/'
       
     return {
         "halides": halides,
@@ -18,7 +17,6 @@ def mock_args():
         "element_features": features,
         "train_stats": train,
         "model_weights": weights,
-        "out_dir": out_dir,
     }
 
 
