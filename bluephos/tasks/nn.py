@@ -120,6 +120,5 @@ NNTask = PipelineTask(
         "train_stats": "train_stats",
         "model_weights": "model_weights",
     },
-    num_gpus=1,
     batch_size=200,
 )
