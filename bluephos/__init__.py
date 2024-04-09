@@ -1,4 +1,4 @@
-__project__ = "bluephos"  # Replace bluephos with actual name (it's just a template).
+__project__ = "bluephos"
 
 try:
     from ._version import __version__
