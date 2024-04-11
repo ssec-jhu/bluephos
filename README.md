@@ -24,7 +24,7 @@ The current version of the pipeline comprises the following sequential tasks:
 
 * Ligand Generation Task: It commences by ingesting aromatic boronic acids and aromatic halides, generating ligand molecules via Suzuki coupling reactions.
 * SMILES to SDF Conversion Task: Molecular structures encoded in SMILES strings are converted into SDF files, facilitating in-depth chemical data manipulation.
-*Neural Network (NN) Task: This phase involves the extraction and engineering of features from each ligand. These features are processed through a trained graph neural network to predict the ligand's z-score, indicative of synthetic potential.
+* Neural Network (NN) Task: This phase involves the extraction and engineering of features from each ligand. These features are processed through a trained graph neural network to predict the ligand's z-score, indicative of synthetic potential.
 
 Planned enhancements include:
 
