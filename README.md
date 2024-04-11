@@ -43,7 +43,7 @@ After cloning, navigate to the project directory:
 # Running the Pipeline
 Execute the BluePhos pipeline within a tox environment for a consistent and reproducible setup:
 
-* ``tox -e run-pipeline -- --halide /path/to/aromatic_halides.csv --acid /path/to/aromatic_boronic_acids.csv --feature /path/to/element_features.csv --train /path/to/train_stats.csv --weight /path/to/model_weights.pt --o /path/to/output_dir/``
+* ``tox -e run-pipeline -- --halide /path/to/aromatic_halides.csv --acid /path/to/aromatic_boronic_acids.csv --feature /path/to/element_features.csv --train /path/to/train_stats.csv --weight /path/to/model_weights.pt -o /path/to/output_dir/``
 
 Replace /path/to/... with the actual paths to your datasets and parameter files.
 
@@ -51,7 +51,7 @@ Replace /path/to/... with the actual paths to your datasets and parameter files.
 ## Example Usage with Test Data
 To run the pipeline using example data provided in the repository:
 
-* ``tox -e run-pipeline -- --halide ./tests/input/aromatic_halides_with_id.csv --acid ./tests/input/aromatic_boronic_acids_with_id.csv --feature ./bluephos/parameters/element_features.csv --train ./bluephos/parameters/train_stats.csv --weight ./bluephos/parameters/full_energy_model_weights.pt --o .``
+* ``tox -e run-pipeline -- --halide ./tests/input/aromatic_halides_with_id.csv --acid ./tests/input/aromatic_boronic_acids_with_id.csv --feature ./bluephos/parameters/element_features.csv --train ./bluephos/parameters/train_stats.csv --weight ./bluephos/parameters/full_energy_model_weights.pt -o .``
 
 This command uses test data to demonstrate the pipeline's functionality, ideal for initial testing and familiarization.
 
@@ -59,22 +59,18 @@ This command uses test data to demonstrate the pipeline's functionality, ideal f
 The default output (--o) dataframe is stored in Parquet format due to its efficient storage, faster data access, and enhanced support for complex data structures. The Parquet file can be accessed in several ways:
 ### Using Pandas 
 Pandas can be used to read and analyze Parquet files.
-
-``import pandas as pd``
-
-``df = pd.read_parquet('08ca147e-f618-11ee-b38f-eab1f408aca3-8.parquet')``
-
-``print(df.describe())``
-
+```py
+import pandas as pd
+df = pd.read_parquet('08ca147e-f618-11ee-b38f-eab1f408aca3-8.parquet')
+print(df.describe())
+```
 ### Using DuckDB
 DuckDB provides an efficient way to query Parquet files directly using SQL syntax.
-
-``import duckdb as ddb``
-
-``query_result = ddb.query('''SELECT * FROM '08ca147e-f618-11ee-b38f-eab1f408aca3-8.parquet' LIMIT 10''')``
-
-``print(query_result.to_df())``
-
+```py
+import duckdb as ddb
+query_result = ddb.query('''SELECT * FROM '08ca147e-f618-11ee-b38f-eab1f408aca3-8.parquet' LIMIT 10''')
+print(query_result.to_df())
+```
 
 
 
