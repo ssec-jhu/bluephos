@@ -5,7 +5,7 @@ from torch.nn import Dropout, Linear
 from torch.nn.init import kaiming_normal_
 from torch_geometric.loader import DataLoader
 from torch_geometric.nn import GCN, Set2Set
-from bluephos.tasks.sdf2feature import feature_create
+from bluephos.modules.sdf2feature import feature_create
 from dplutils.pipeline import PipelineTask
 
 

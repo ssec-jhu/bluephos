@@ -1,4 +1,2 @@
 halide_identifier,halide_SMILES
-H10,CCN(C1=NC(=C(N=C1Cl)C(=O)N=C(N)N)N)C(C)C
 H11,CC(C)CN(C)C1=NC(=C(N=C1Cl)C(=O)N=C(N)N)N
-H12,C1CCCN(CC1)C2=NC(=C(N=C2Cl)C(=O)N=C(N)N)N
