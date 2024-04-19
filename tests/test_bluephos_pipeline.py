@@ -48,8 +48,8 @@ M  END
     df = pd.DataFrame(data)
     return df
 
-@patch('bluephos.modules.octahedral_embed')
-@patch('bluephos.modules.annotate_rdkit_with_ase.optimize_geometry')
+@patch('bluephos.tasks.optimizegeometries.octahedral_embed')
+@patch('bluephos.tasks.optimizegeometries.optimize_geometry')
 def test_optimize(mock_optimize_geometry, mock_octahedral_embed, setup_dataframe):
     # Assume these functions do not throw an error and behave as expected
     mock_octahedral_embed.return_value = None  # Does not need to return anything
