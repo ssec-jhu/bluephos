@@ -7,9 +7,16 @@ from bluephos.modules.octahedral_embed import octahedral_embed
 from bluephos.modules.annotate_rdkit_with_ase import optimize_geometry
 from bluephos.modules.bond_length import bonds_maintained
 from bluephos.modules.isoctahedral import isoctahedral
-from xtb.ase.calculator import XTB
+# from xtb.ase.calculator import XTB
 from ase.calculators.calculator import InputError
 from dplutils.pipeline import PipelineTask
+
+try:
+    from xtb.ase.calculator import XTB
+except ImportError:
+    XTB = None
+    print("xtb not installed. Limited functionality available.")
+
 
 # Configure logging
 logging.basicConfig(
@@ -27,7 +34,10 @@ def optimize(df, row_index, isomer):
     for attempt in range(3):
         try:
             octahedral_embed(mol, isomer)
-            optimize_geometry(XTB(method="GFN2-xTB"), mol, uhf=2, conformation_index=0)
+            if XTB is not None:
+                optimize_geometry(XTB(method="GFN2-xTB"), mol, uhf=2, conformation_index=0)
+            else:
+                print("Proceeding without xTB functionality.")
             end = time()
             print(f"Optimized {mol_id} in {end-start} seconds")
 
