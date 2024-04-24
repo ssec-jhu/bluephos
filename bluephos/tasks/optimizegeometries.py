@@ -7,7 +7,6 @@ from bluephos.modules.octahedral_embed import octahedral_embed
 from bluephos.modules.annotate_rdkit_with_ase import optimize_geometry
 from bluephos.modules.bond_length import bonds_maintained
 from bluephos.modules.isoctahedral import isoctahedral
-# from xtb.ase.calculator import XTB
 from ase.calculators.calculator import InputError
 from dplutils.pipeline import PipelineTask
 
@@ -15,13 +14,10 @@ try:
     from xtb.ase.calculator import XTB
 except ImportError:
     XTB = None
-    print("xtb not installed. Limited functionality available.")
+    logging.warning("xtb not installed. Limited functionality available.")
 
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
+logger = logging.getLogger(__name__)
 
 
 def optimize(df, row_index, isomer):
@@ -35,34 +31,35 @@ def optimize(df, row_index, isomer):
         try:
             octahedral_embed(mol, isomer)
             if XTB is not None:
-                optimize_geometry(XTB(method="GFN2-xTB"), mol, uhf=2, conformation_index=0)
+                # optimize_geometry(mol, XTB(method="GFN2-xTB"),  conformation_index=0, uhf=2)
+                optimize_geometry(XTB(method="GFN2-xTB"), mol,   conformation_index=0, uhf=2)
             else:
-                print("Proceeding without xTB functionality.")
+                logger.info("Proceeding without xTB functionality.")
             end = time()
-            print(f"Optimized {mol_id} in {end-start} seconds")
+            logger.info(f"Optimized {mol_id} in {end-start} seconds")
 
             if bonds_maintained(mol) and isoctahedral(mol):
                 # Store the molecule in XYZ format in the DataFrame
-                print("Go through check and will write to xyz")
+                logger.info("Go through check and will write to xyz")
                 df.at[row_index, "xyz"] = MolToXYZBlock(mol)
                 break
             else:
-                print(f"{mol_id} failed geometry check")
+                logger.error(f"{mol_id} failed geometry check")
                 df.at[row_index, "xyz"] = "failed"
                 break
 
         except InputError:
-            print(f"InputError for {mol_id}, will attempt {3 - (attempt+1)} more times")
+            logger.error(f"InputError for {mol_id}, will attempt {3 - (attempt+1)} more times")
             sleep(10)
             continue
         except ValueError:
-            print(
+            logger.error(
                 f"ValueError, probably because ConstrainedEmbed couldn't embed {mol_id}"
             )
             df.at[row_index, "xyz"] = "failed"
             break
         except Exception as e:
-            print(f"Other problem with {mol_id}: {str(e)}")
+            logger.exception(f"Unhandled exception for {mol_id}: {str(e)}")
             df.at[row_index, "xyz"] = "failed"
             break
 

@@ -1,7 +1,7 @@
 from rdkit.Chem.rdMolTransforms import GetBondLength
 
 # Function that checks bond length to verify geometries
-elems_to_check = ["C", "H", "N", "O", "F", "Cl"]
+ELEMS_TO_CHECK = ["C", "H", "N", "O", "F", "Cl"]
 def bond_lengths(mol):
     max_nonir_bond_length = 0
     max_ir_bond_length = 0
@@ -10,7 +10,7 @@ def bond_lengths(mol):
         j = bond.GetEndAtomIdx()
         start_elem = bond.GetBeginAtom().GetSymbol()
         end_elem = bond.GetEndAtom().GetSymbol()
-        if start_elem in elems_to_check and end_elem in elems_to_check:
+        if start_elem in ELEMS_TO_CHECK and end_elem in ELEMS_TO_CHECK:
             max_nonir_bond_length = max([GetBondLength(mol.GetConformer(0), i, j),
                                          max_nonir_bond_length])
         if start_elem in "Ir" or end_elem in "Ir":
