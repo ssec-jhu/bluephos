@@ -162,14 +162,7 @@ def octahedral_embed(mol, isomer):
     """Embeds a molecule based on the skeletons for 'fac' or 'mer' isomers."""
     rdmolops.RemoveStereochemistry(mol)
     skeletons = compute_skeletons(isomer)
-    # for skeleton in skeletons:
-    #     if len(mol.GetSubstructMatch(skeleton)) > 0:
-    #         try:
-    #             AllChem.ConstrainedEmbed(mol, skeleton, ignoreSmoothingFailures=True)
-    #             return
-    #         except ValueError:
-    #             continue
-    # raise ValueError("Molecule does not match any of the provided templates")
+
     finished = False
     for skeleton in skeletons:
         if len(mol.GetSubstructMatch(skeleton)) > 0:
