@@ -128,7 +128,7 @@ def optimize_geometry(
         with tempfile.TemporaryDirectory() as tmp_dir:
             noise = "".join(random.choices(string.ascii_uppercase + string.digits, k=20))
             # Name of the trajectory file
-            traj_filename = f"tmp_opt_{noise}.traj"
+            traj_filename = os.path.join(tmp_dir, f"tmp_opt_{noise}.traj")
 
             # Optimize the geometry
             mol_opt_ase = rdkit_to_ase(mol_rdkit, conformation_index, charge, uhf)
