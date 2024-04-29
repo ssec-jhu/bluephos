@@ -1,45 +1,60 @@
 import os.path
 from rdkit import Chem
-from rdkit.Chem.rdchem import RWMol, Conformer
-from rdkit.Chem.rdmolfiles import MolFromMol2File, MolFromSmarts
-from rdkit.Chem.AllChem import ConstrainedEmbed
-from rdkit.Chem.rdChemReactions import ReactionFromSmarts
-from rdkit.Chem.rdmolops import RemoveStereochemistry
+from rdkit.Chem import rdchem, AllChem, rdChemReactions, rdmolops, rdmolfiles
 
-dir_of_this_file = os.path.dirname(os.path.abspath(__file__))
+CARBENE_SKELETON_SMARTS = "[Ir]135(<-[CH0](~N(~*)~*~2)~N(~*~2)~c~c~1)(<-[CH0](~N(~*)~*~4)~N(~*~4)~c~c~3)(<-[CH0](~N(~*)~*~6)~N(~*~6)~c~c~5)"
 
-def make_bonds_dative(mol, target_elem = "Ir"):
-    editable_mol = RWMol(mol)
+
+def make_bonds_dative(mol, target_elem="Ir"):
+    """
+    Modifies a molecule to change specific bonds to dative based on the element targeting.
+
+    Parameters:
+        mol (Mol): The RDKit molecule object to modify.
+        target_elem (str): Target element symbol for bond modifications.
+
+    Returns:
+        Mol: The modified RDKit molecule with dative bonds where applicable.
+    """
+    editable_mol = rdchem.RWMol(mol)
 
     # If you don't make a list, it loops infinitely over the bonds it's creating
     for bond in list(editable_mol.GetBonds()):
         iridium = None
         nitrogen = None
         carbene = None
-        if bond.GetBeginAtom().GetSymbol() == target_elem and \
-                bond.GetEndAtom().GetSymbol() in ["N", "P"] and \
-                bond.GetEndAtom().GetFormalCharge() == 1:
+        if (
+            bond.GetBeginAtom().GetSymbol() == target_elem
+            and bond.GetEndAtom().GetSymbol() in ["N", "P"]
+            and bond.GetEndAtom().GetFormalCharge() == 1
+        ):
             iridium = bond.GetBeginAtom()
             nitrogen = bond.GetEndAtom()
             start_idx = bond.GetEndAtomIdx()
             end_idx = bond.GetBeginAtomIdx()
-        elif bond.GetEndAtom().GetSymbol() == target_elem and \
-                bond.GetBeginAtom().GetSymbol() in ["N", "P"] and \
-                bond.GetBeginAtom().GetFormalCharge() == 1:
+        elif (
+            bond.GetEndAtom().GetSymbol() == target_elem
+            and bond.GetBeginAtom().GetSymbol() in ["N", "P"]
+            and bond.GetBeginAtom().GetFormalCharge() == 1
+        ):
             iridium = bond.GetEndAtom()
             nitrogen = bond.GetBeginAtom()
             start_idx = bond.GetBeginAtomIdx()
             end_idx = bond.GetEndAtomIdx()
-        if bond.GetBeginAtom().GetSymbol() == target_elem and \
-                bond.GetEndAtom().GetSymbol() == "C" and \
-                bond.GetEndAtom().GetTotalValence() == 3:
+        if (
+            bond.GetBeginAtom().GetSymbol() == target_elem
+            and bond.GetEndAtom().GetSymbol() == "C"
+            and bond.GetEndAtom().GetTotalValence() == 3
+        ):
             iridium = bond.GetBeginAtom()
             carbene = bond.GetEndAtom()
             start_idx = bond.GetEndAtomIdx()
             end_idx = bond.GetBeginAtomIdx()
-        elif bond.GetEndAtom().GetSymbol() == target_elem and \
-                bond.GetBeginAtom().GetSymbol() == "C" and \
-                bond.GetBeginAtom().GetTotalValence() == 3:
+        elif (
+            bond.GetEndAtom().GetSymbol() == target_elem
+            and bond.GetBeginAtom().GetSymbol() == "C"
+            and bond.GetBeginAtom().GetTotalValence() == 3
+        ):
             iridium = bond.GetEndAtom()
             carbene = bond.GetBeginAtom()
             start_idx = bond.GetBeginAtomIdx()
@@ -58,79 +73,103 @@ def make_bonds_dative(mol, target_elem = "Ir"):
 
     return outmol
 
-def transfer_conformation(mol, substruct, conformer = 0):
-    '''Given a molecule, and a second molecule which is a substructure of the
+
+def transfer_conformation(mol, substruct, conformer=0):
+    """Given a molecule, and a second molecule which is a substructure of the
     first, assign coordinates to the substructure based on the matching part of
-    the original molecule'''
+    the original molecule"""
     match = mol.GetSubstructMatch(substruct)
-    substruct_conformation = Conformer(substruct.GetNumAtoms())
+    substruct_conformation = rdchem.Conformer(substruct.GetNumAtoms())
     for i, index in enumerate(match):
         point = mol.GetConformer(conformer).GetAtomPosition(index)
         substruct_conformation.SetAtomPosition(i, point)
     substruct.AddConformer(substruct_conformation)
 
-fac = make_bonds_dative(MolFromMol2File(os.path.join(dir_of_this_file, "OHUZEW.mol2")))
-RemoveStereochemistry(fac)
-mer = make_bonds_dative(MolFromMol2File(os.path.join(dir_of_this_file, "OHUZIA.mol2")))
-RemoveStereochemistry(mer)
-
-template = MolFromSmarts("[Ir]1~n:[*]~[*]:c~1")
-
-carbene_fac = make_bonds_dative(MolFromMol2File(os.path.join(dir_of_this_file, "MAXYIU.mol2")))
-RemoveStereochemistry(carbene_fac)
-carbene_mer = make_bonds_dative(MolFromMol2File(os.path.join(dir_of_this_file, "MAXYOA.mol2")))
-RemoveStereochemistry(carbene_mer)
-
-# Extract skeletons of a molecule based on a template, keeping coordinates
-# Multiple skeletons because I don't know how to do wildcards
-def skeleton(template, mol):
-    template_matches = mol.GetSubstructMatches(template)
-    matching_indices = set(sum(template_matches, ()))
-    editable_mol = RWMol(mol)
-    editable_mol.BeginBatchEdit()
-    for atom in editable_mol.GetAtoms():
-        # Remove all atoms except the matching ones
-        if atom.GetIdx() not in matching_indices:
-            editable_mol.RemoveAtom(atom.GetIdx())
-        # All the atoms should have formal charge 0, not sure why they don't
-        atom.SetFormalCharge(0)
-    editable_mol.CommitBatchEdit()
-    skeleton_mol = editable_mol.GetMol()
-    return skeleton_mol
-
-fac_skeleton = skeleton(template, fac)
-mer_skeleton = skeleton(template, mer)
-
-# Making the carbene skeletons in a completely different way
-# I probably am going to want to do this for all of them
-carbene_skeleton_smarts = "[Ir]135(<-[CH0](~N(~*)~*~2)~N(~*~2)~c~c~1)(<-[CH0](~N(~*)~*~4)~N(~*~4)~c~c~3)(<-[CH0](~N(~*)~*~6)~N(~*~6)~c~c~5)"
-carbene_fac_skeleton = MolFromSmarts(carbene_skeleton_smarts)
-transfer_conformation(carbene_fac, carbene_fac_skeleton)
-carbene_mer_skeleton = MolFromSmarts(carbene_skeleton_smarts)
-transfer_conformation(carbene_mer, carbene_mer_skeleton)
 
 def run_three_times(mol, reaction):
     for i in range(3):
         mol = reaction.RunReactants([mol])[0][0]
     return mol
-reactions = [
-    ReactionFromSmarts("[Ir:1]1<-[n:2]:[n:3]~[c:4]:[c:5]~1>>[Ir:1]1<-[n:2]:[c:3]~[n:4]:[c:5]~1"),
-    ReactionFromSmarts("[Ir:1]1<-[n:2]:[n:3]~[c:4]:[c:5]~1>>[Ir:1]1<-[n:2]:[n:3]~[n:4]:[c:5]~1"),
-    ReactionFromSmarts("[Ir:1]1<-[n:2]:[n:3]~[c:4]:[c:5]~1>>[Ir:1]1<-[n:2]:[c:3]~[c:4]:[c:5]~1")
-]
-fac_skeletons = [fac_skeleton] + [run_three_times(fac_skeleton, reaction) for reaction in reactions] + [carbene_fac_skeleton]
-mer_skeletons = [mer_skeleton] + [run_three_times(mer_skeleton, reaction) for reaction in reactions] + [carbene_mer_skeleton]
+
+
+def get_directory_path():
+    """Returns the directory path of the current script."""
+    return os.path.dirname(os.path.abspath(__file__))
+
+
+def skeleton_extraction(mol, template):
+    """Extracts and returns the skeleton of a molecule based on the provided SMARTS template."""
+    matches = mol.GetSubstructMatches(template)
+    matching_indices = set(sum(matches, ()))
+    editable_mol = rdchem.RWMol(mol)
+    editable_mol.BeginBatchEdit()
+    for atom in editable_mol.GetAtoms():
+        if atom.GetIdx() not in matching_indices:
+            editable_mol.RemoveAtom(atom.GetIdx())
+        atom.SetFormalCharge(0)
+    editable_mol.CommitBatchEdit()
+    return editable_mol.GetMol()
+
+
+def load_molecule(file_name):
+    """Loads a molecule from a .mol2 file given a file name."""
+    dir_path = get_directory_path()
+    base_mol = rdmolfiles.MolFromMol2File(os.path.join(dir_path, file_name))
+    dative_mol = make_bonds_dative(base_mol)
+    rdmolops.RemoveStereochemistry(dative_mol)
+    return dative_mol
+
+
+def compute_skeletons(isomer):
+    """Computes and returns all skeletons based on the isomer type."""
+
+    if isomer == "fac":
+        base_mol = load_molecule("OHUZEW.mol2")
+        carbene_mol = load_molecule("MAXYIU.mol2")
+    elif isomer == "mer":
+        base_mol = load_molecule("OHUZIA.mol2")
+        carbene_mol = load_molecule("MAXYOA.mol2")
+    else:
+        raise ValueError(f'Isomer should be "mer" or "fac", given {isomer}')
+
+    template = rdmolfiles.MolFromSmarts("[Ir]1~n:[*]~[*]:c~1")
+
+    skeleton = skeleton_extraction(base_mol, template)
+
+    carbene_skeleton = rdmolfiles.MolFromSmarts(CARBENE_SKELETON_SMARTS)
+    transfer_conformation(carbene_mol, carbene_skeleton)
+    reactions = [
+        rdChemReactions.ReactionFromSmarts(
+            "[Ir:1]1<-[n:2]:[n:3]~[c:4]:[c:5]~1>>[Ir:1]1<-[n:2]:[c:3]~[n:4]:[c:5]~1"
+        ),
+        rdChemReactions.ReactionFromSmarts(
+            "[Ir:1]1<-[n:2]:[n:3]~[c:4]:[c:5]~1>>[Ir:1]1<-[n:2]:[n:3]~[n:4]:[c:5]~1"
+        ),
+        rdChemReactions.ReactionFromSmarts(
+            "[Ir:1]1<-[n:2]:[n:3]~[c:4]:[c:5]~1>>[Ir:1]1<-[n:2]:[c:3]~[c:4]:[c:5]~1"
+        ),
+    ]
+    skeletons = (
+        [skeleton]
+        + [run_three_times(skeleton, reaction) for reaction in reactions]
+        + [carbene_skeleton]
+    )
+
+    return skeletons
+
 
 def octahedral_embed(mol, isomer):
-    # Needed for some of the mol2 files I got from CSD
-    # Will not be able to embed with stereochemistry
-    RemoveStereochemistry(mol)
-    if isomer == "fac":
-        skeletons = fac_skeletons
-    elif isomer == "mer":
-        skeletons = mer_skeletons
-    else:
-        raise ValueError(f"Isomer should be \"mer\" or \"fac\", given {isomer}")
+    """Embeds a molecule based on the skeletons for 'fac' or 'mer' isomers."""
+    rdmolops.RemoveStereochemistry(mol)
+    skeletons = compute_skeletons(isomer)
+    # for skeleton in skeletons:
+    #     if len(mol.GetSubstructMatch(skeleton)) > 0:
+    #         try:
+    #             AllChem.ConstrainedEmbed(mol, skeleton, ignoreSmoothingFailures=True)
+    #             return
+    #         except ValueError:
+    #             continue
+    # raise ValueError("Molecule does not match any of the provided templates")
     finished = False
     for skeleton in skeletons:
         if len(mol.GetSubstructMatch(skeleton)) > 0:
@@ -139,7 +178,8 @@ def octahedral_embed(mol, isomer):
             # with a small template the imidazole is hroribly twisted, probably
             # because it thinks the atoms are aliphatic. Ignoring smoothing
             # failures with the large template, it works
-            ConstrainedEmbed(mol, skeleton, ignoreSmoothingFailures = True)
+            AllChem.ConstrainedEmbed(mol, skeleton, ignoreSmoothingFailures=True)
             finished = True
+            break
     if not finished:
         raise ValueError("Doesn't match templates")

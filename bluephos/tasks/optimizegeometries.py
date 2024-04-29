@@ -1,6 +1,6 @@
 import logging
 import pandas as pd
-from time import time, sleep
+from time import sleep
 from rdkit import Chem
 from rdkit.Chem import AddHs, MolToXYZBlock
 from bluephos.modules.octahedral_embed import octahedral_embed
@@ -19,11 +19,32 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
+# Timer code left blank pending Alexander's clarification on timing requirements
+def optimize(row):
+    mol_id = row["ligand_identifier"]
+    existing_xyz = row.get("xyz")
 
-def optimize(df, row_index, isomer):
+    # Check if already processed or failed
+    # TODO: Reconsider/define data source for tracking processed/failed items post-pipeline.
+    if existing_xyz is not None and existing_xyz != "":
+        if existing_xyz == "failed":
+            logger.info(f"Molecule {mol_id} previously failed. Skipping optimization.")
+        else:
+            logger.info(f"Molecule {mol_id} already processed. Skipping optimization.")
+        return existing_xyz
 
-    start = time()
-    mol = AddHs(Chem.MolFromMolBlock(df.loc[row_index, "structure"]))
+    mol = row["structure"]
+
+    if (
+        pd.isna(mol)
+        or Chem.MolFromMolBlock(mol) is None
+        or Chem.MolFromMolBlock(mol).GetNumAtoms() > 200
+    ):
+        logger.warning(f"Molecule {mol_id} is invalid or too large.")
+        return "failed"
+
+    mol = AddHs(Chem.MolFromMolBlock(mol))
+    isomer = "fac"  # Example isomer, can be dynamically set if needed
     mol_id = mol.GetProp("_Name") + f"_{isomer}"
     mol.SetProp("_Name", mol_id)
 
@@ -31,59 +52,40 @@ def optimize(df, row_index, isomer):
         try:
             octahedral_embed(mol, isomer)
             if XTB is not None:
-                # optimize_geometry(mol, XTB(method="GFN2-xTB"),  conformation_index=0, uhf=2)
-                optimize_geometry(XTB(method="GFN2-xTB"), mol,   conformation_index=0, uhf=2)
+                optimize_geometry(
+                    mol, XTB(method="GFN2-xTB"), conformation_index=0, uhf=2
+                )
             else:
-                logger.info("Proceeding without xTB functionality.")
-            end = time()
-            logger.info(f"Optimized {mol_id} in {end-start} seconds")
+                logger.error("Proceeding without xTB functionality.")
 
             if bonds_maintained(mol) and isoctahedral(mol):
                 # Store the molecule in XYZ format in the DataFrame
                 logger.info("Go through check and will write to xyz")
-                df.at[row_index, "xyz"] = MolToXYZBlock(mol)
-                break
+                return MolToXYZBlock(mol)
             else:
-                logger.error(f"{mol_id} failed geometry check")
-                df.at[row_index, "xyz"] = "failed"
-                break
+                logger.error(f"{mol_id} failed geometry check on attemp {attempt + 1}")
+                return "failed"
 
         except InputError:
-            logger.error(f"InputError for {mol_id}, will attempt {3 - (attempt+1)} more times")
+            logger.error(
+                f"InputError for {mol_id}, will attempt {3 - (attempt+1)} more times"
+            )
             sleep(10)
             continue
         except ValueError:
             logger.error(
                 f"ValueError, probably because ConstrainedEmbed couldn't embed {mol_id}"
             )
-            df.at[row_index, "xyz"] = "failed"
-            break
+            return "failed"
         except Exception as e:
             logger.exception(f"Unhandled exception for {mol_id}: {str(e)}")
-            df.at[row_index, "xyz"] = "failed"
-            break
+            return "failed"
 
 
 def optimize_geometries(df: pd.DataFrame) -> pd.DataFrame:
-
     if "xyz" not in df.columns:
         df["xyz"] = None
-    for index, row in df.iterrows():
-        mol_id = row["ligand_identifier"]
-        mol = row["structure"]
-
-        if mol is None or Chem.MolFromMolBlock(mol).GetNumAtoms() > 200:
-            logging.warning(f"Molecule {mol_id} is invalid or too large.")
-            df.at[index, "xyz"] = "failed"
-            continue
-
-        if df.at[index, "xyz"] is not None:
-            logging.info(f"Molecule {mol_id} already processed or previously failed.")
-            continue
-
-        optimize(df, index, "fac")
-
-    return df
+    return df.assign(xyz=df.apply(optimize, axis=1))
 
 
 OptimizeGeometriesTask = PipelineTask(
