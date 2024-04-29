@@ -138,17 +138,7 @@ def compute_skeletons(isomer):
 
     carbene_skeleton = rdmolfiles.MolFromSmarts(CARBENE_SKELETON_SMARTS)
     transfer_conformation(carbene_mol, carbene_skeleton)
-    reactions = [
-        rdChemReactions.ReactionFromSmarts(
-            "[Ir:1]1<-[n:2]:[n:3]~[c:4]:[c:5]~1>>[Ir:1]1<-[n:2]:[c:3]~[n:4]:[c:5]~1"
-        ),
-        rdChemReactions.ReactionFromSmarts(
-            "[Ir:1]1<-[n:2]:[n:3]~[c:4]:[c:5]~1>>[Ir:1]1<-[n:2]:[n:3]~[n:4]:[c:5]~1"
-        ),
-        rdChemReactions.ReactionFromSmarts(
-            "[Ir:1]1<-[n:2]:[n:3]~[c:4]:[c:5]~1>>[Ir:1]1<-[n:2]:[c:3]~[c:4]:[c:5]~1"
-        ),
-    ]
+    
     REACTION_PREFIX = "[Ir:1]1<-[n:2]:[n:3]~[c:4]:[c:5]~1>>[Ir:1]1<-[n:2]:"
     REACTION_SUFFIX = ":[c:5]~1"
 
