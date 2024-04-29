@@ -149,6 +149,13 @@ def compute_skeletons(isomer):
             "[Ir:1]1<-[n:2]:[n:3]~[c:4]:[c:5]~1>>[Ir:1]1<-[n:2]:[c:3]~[c:4]:[c:5]~1"
         ),
     ]
+    REACTION_PREFIX = "[Ir:1]1<-[n:2]:[n:3]~[c:4]:[c:5]~1>>[Ir:1]1<-[n:2]:"
+    REACTION_SUFFIX = ":[c:5]~1"
+
+    reactions = [
+        rdChemReactions.ReactionFromSmarts(f'{REACTION_PREFIX}{core}{REACTION_SUFFIX}') 
+        for core in ['[c:3]~[n:4]', '[n:3]~[n:4]', '[c:3]~[c:4]']
+    ]
     skeletons = (
         [skeleton]
         + [run_three_times(skeleton, reaction) for reaction in reactions]
@@ -173,6 +180,6 @@ def octahedral_embed(mol, isomer):
             # failures with the large template, it works
             AllChem.ConstrainedEmbed(mol, skeleton, ignoreSmoothingFailures=True)
             finished = True
-            break
+            # break
     if not finished:
         raise ValueError("Doesn't match templates")

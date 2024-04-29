@@ -67,7 +67,7 @@ def metal_neighbor_coords(mol, metal="Ir", conformer_index=0):
 
             # Fetch positions of all neighbors using their indices
             # Filter neighbors that have already been processed using indices_seen
-            points = [conformer.GetAtomPosition(idx) for idx in neighbor_indexes if idx not in indices_seen]
+            points = [conformer.GetAtomPosition(idx) for idx in neighbor_indexes - indices_seen]
 
             # Calculate relative coordinates and extend the coord_list
             coord_list.extend(recenter_point(p, center) for p in points)
