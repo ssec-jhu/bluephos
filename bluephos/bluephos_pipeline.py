@@ -7,6 +7,7 @@ from dplutils import cli
 from bluephos.tasks.generateligandtable import GenerateLigandTableTask
 from bluephos.tasks.smiles2sdf import Smiles2SDFTask
 from bluephos.tasks.nn import NNTask
+from bluephos.tasks.optimizegeometries import OptimizeGeometriesTask
 
 
 def ligand_pair_generator(halides_file, acids_file):
@@ -34,6 +35,7 @@ def get_pipeline(
         GenerateLigandTableTask,
         Smiles2SDFTask,
         NNTask,
+        OptimizeGeometriesTask,
         # Add additional tasks here as needed
     ]
     pipeline_executor = RayStreamGraphExecutor(

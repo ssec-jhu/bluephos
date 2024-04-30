@@ -1,7 +1,0 @@
-ase==3.22.1
-dplutils==0.4.0
-pandas==2.2.1
-ray==2.9.3
-rdkit_pypi==2022.9.5
-torch==2.2.0
-torch_geometric==2.5.2
