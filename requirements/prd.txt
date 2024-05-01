@@ -5,5 +5,4 @@ ray[default]==2.9.3
 rdkit_pypi==2022.9.5
 torch==2.2.0
 torch_geometric==2.5.2
-fastapi==0.110.0
 uvicorn[standard]==0.29.0
