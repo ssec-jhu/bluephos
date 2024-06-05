@@ -20,9 +20,7 @@ def bond_lengths(mol):
     max_ir_bond_length = 0
 
     if mol.GetNumConformers() == 0:
-        raise ValueError(
-            "Molecule has no conformers and bond lengths cannot be calculated."
-        )
+        raise ValueError("Molecule has no conformers and bond lengths cannot be calculated.")
 
     for bond in mol.GetBonds():
         i = bond.GetBeginAtomIdx()
@@ -36,7 +34,7 @@ def bond_lengths(mol):
 
         if start_elem in ELEMS_TO_CHECK and end_elem in ELEMS_TO_CHECK:
             max_nonir_bond_length = max(bond_length, max_nonir_bond_length)
-        
+
         if start_elem == "Ir" or end_elem == "Ir":
             max_ir_bond_length = max(bond_length, max_ir_bond_length)
 
@@ -54,7 +52,4 @@ def bonds_maintained(mol):
     bool: True if all bonds are maintained within thresholds, else False.
     """
     max_nonir_bond_length, max_ir_bond_length = bond_lengths(mol)
-    return (
-        max_nonir_bond_length < NON_IR_BOND_THRESHOLD
-        and max_ir_bond_length < IR_BOND_THRESHOLD
-    )
+    return max_nonir_bond_length < NON_IR_BOND_THRESHOLD and max_ir_bond_length < IR_BOND_THRESHOLD

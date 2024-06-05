@@ -1,6 +1,7 @@
 import pytest
-from bluephos.bluephos_pipeline import get_pipeline
 from dplutils.pipeline.ray import RayStreamGraphExecutor
+
+from bluephos.bluephos_pipeline import get_pipeline
 
 
 @pytest.fixture
@@ -22,7 +23,6 @@ def mock_args():
 
 
 def test_get_pipeline(mock_args):
-
     pipeline_executor = get_pipeline(**mock_args)
 
     # Assert that the pipeline_executor is an instance of RayStreamGraphExecutor
