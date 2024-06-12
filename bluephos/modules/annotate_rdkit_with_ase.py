@@ -1,12 +1,13 @@
 import os
+import random
 import string
 import tempfile
-import random
+
 import numpy as np
-from rdkit.Chem.rdDistGeom import EmbedMolecule
-from rdkit.Geometry.rdGeometry import Point3D
 from ase import Atoms
 from ase.optimize import BFGS
+from rdkit.Chem.rdDistGeom import EmbedMolecule
+from rdkit.Geometry.rdGeometry import Point3D
 
 
 def rdkit_to_ase(mol_rdkit, conformation_index, charge, uhf):

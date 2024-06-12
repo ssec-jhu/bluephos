@@ -33,9 +33,10 @@ def unit_vector(vector):
     """Returns the unit vector of the vector."""
     return vector / np.linalg.norm(vector)
 
+
 def recenter_point(point, center):
-        """Calculate the relative coordinates from the center to the point."""
-        return [point.x - center.x, point.y - center.y, point.z - center.z]
+    """Calculate the relative coordinates from the center to the point."""
+    return [point.x - center.x, point.y - center.y, point.z - center.z]
 
 
 def metal_neighbor_coords(mol, metal="Ir", conformer_index=0):
@@ -61,7 +62,7 @@ def metal_neighbor_coords(mol, metal="Ir", conformer_index=0):
     for atom in mol.GetAtoms():
         if atom.GetSymbol() == metal:
             center = conformer.GetAtomPosition(atom.GetIdx())
-            
+
             # Retrieve all neighbor indices for the current metal atom
             neighbor_indexes = set(neighbor.GetIdx() for neighbor in atom.GetNeighbors())
 

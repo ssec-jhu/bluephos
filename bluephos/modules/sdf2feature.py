@@ -1,8 +1,8 @@
 import pandas as pd
+import torch as t
 from rdkit.Chem import AddHs, MolFromMolBlock
 from rdkit.Chem.rdchem import Mol
 from torch_geometric.data import Data
-import torch as t
 
 
 # Define a class to encapsulate molecule-related information and operations
@@ -160,9 +160,7 @@ class Molecule:
             # Add or replace special column names according to the special_colnames argument
             self.special_colnames.update(special_colnames)
 
-            to_remove = [
-                key for key, value in self.special_colnames.items() if value is None
-            ]
+            to_remove = [key for key, value in self.special_colnames.items() if value is None]
             for key in to_remove:
                 del self.special_colnames[key]
         if molecule_table is not None:
@@ -173,10 +171,7 @@ class Molecule:
 
         if name is not None:
             self.name = str(name)
-        elif (
-            molecule_table is not None
-            and self.special_colnames["mol_id"] in molecule_table.columns
-        ):
+        elif molecule_table is not None and self.special_colnames["mol_id"] in molecule_table.columns:
             mol_id_col = molecule_table[self.special_colnames["mol_id"]]
             self.name = str(mol_id_col.item())
         else:
@@ -204,9 +199,7 @@ class Molecule:
         return None
 
     def get_torch_geom_data(self):
-        return tables_to_torch_geom_data(
-            self.name, self.molecule_table, self.one_atom_table, self.two_atom_table
-        )
+        return tables_to_torch_geom_data(self.name, self.molecule_table, self.one_atom_table, self.two_atom_table)
 
 
 # Function to convert molecule tables to PyTorch Geometric Data
@@ -226,9 +219,7 @@ def tables_to_torch_geom_data(mol_id, molecule_table, atom_table, bond_table):
         bond_table = pd.concat(
             [
                 bond_table,
-                bond_table.rename(
-                    columns={"start_atom": "end_atom", "end_atom": "start_atom"}
-                ),
+                bond_table.rename(columns={"start_atom": "end_atom", "end_atom": "start_atom"}),
             ]
         )
         edges = bond_table[["start_atom", "end_atom"]].to_numpy().T
@@ -281,16 +272,12 @@ def tables2data(mol_id, molecule_table=None, atom_table=None, bond_table_oneway=
         atom_properties = atom_table_sorted.drop(columns=["mol_id", "atom_id"])
         output.x = t.tensor(atom_properties.to_numpy(), dtype=t.float32)
     if bond_table_oneway is not None:
-        bond_table_reversed = bond_table_oneway.rename(
-            columns={"start_atom": "end_atom", "end_atom": "start_atom"}
-        )
+        bond_table_reversed = bond_table_oneway.rename(columns={"start_atom": "end_atom", "end_atom": "start_atom"})
         bond_table_twoway = pd.concat([bond_table_oneway, bond_table_reversed])
         edges = bond_table_twoway[["start_atom", "end_atom"]]
         # 2 by 2*b matrix containing the adjacency list
         output.edge_index = t.tensor(edges.to_numpy().transpose(), dtype=t.long)
-        bond_properties = bond_table_twoway.drop(
-            columns=["mol_id", "bond_id", "start_atom", "end_atom"]
-        )
+        bond_properties = bond_table_twoway.drop(columns=["mol_id", "bond_id", "start_atom", "end_atom"])
         if bond_properties.shape[1] != 0:
             # 2*b by j matrix of one-hot bond types
             output.edge_attr = t.tensor(bond_properties.to_numpy(), dtype=t.float32)
@@ -298,9 +285,7 @@ def tables2data(mol_id, molecule_table=None, atom_table=None, bond_table_oneway=
 
 
 def add_positions(rdkit_mol, conf_id=0):
-    for pos_vec, atom in zip(
-        list(rdkit_mol.GetConformer(conf_id).GetPositions()), rdkit_mol.GetAtoms()
-    ):
+    for pos_vec, atom in zip(list(rdkit_mol.GetConformer(conf_id).GetPositions()), rdkit_mol.GetAtoms()):
         atom.SetDoubleProp("x", pos_vec[0])
         atom.SetDoubleProp("y", pos_vec[1])
         atom.SetDoubleProp("z", pos_vec[2])
@@ -308,7 +293,6 @@ def add_positions(rdkit_mol, conf_id=0):
 
 # Convert RDKit molecule to Molecule class instance
 def rdkit_to_cauldronoid(rdkit_mol):
-
     add_default_props(rdkit_mol)
 
     if rdkit_mol.GetNumConformers() > 0:
@@ -317,55 +301,32 @@ def rdkit_to_cauldronoid(rdkit_mol):
     for atom in rdkit_mol.GetAtoms():
         atom.SetProp("symbol", atom.GetSymbol())
 
-    name = (
-        rdkit_mol.GetProp("_Name")
-        if rdkit_mol.HasProp("_Name") and rdkit_mol.GetProp("_Name") != ""
-        else None
-    )
-    molecule_data = pd.DataFrame(
-        [rdkit_mol.GetPropsAsDict(includePrivate=False, includeComputed=False)]
-    )
+    name = rdkit_mol.GetProp("_Name") if rdkit_mol.HasProp("_Name") and rdkit_mol.GetProp("_Name") != "" else None
+    molecule_data = pd.DataFrame([rdkit_mol.GetPropsAsDict(includePrivate=False, includeComputed=False)])
     atom_data = pd.DataFrame(
-        [
-            atom.GetPropsAsDict(includePrivate=False, includeComputed=False)
-            for atom in rdkit_mol.GetAtoms()
-        ]
+        [atom.GetPropsAsDict(includePrivate=False, includeComputed=False) for atom in rdkit_mol.GetAtoms()]
     )
     bond_data = pd.DataFrame(
-        [
-            bond.GetPropsAsDict(includePrivate=False, includeComputed=False)
-            for bond in rdkit_mol.GetBonds()
-        ]
+        [bond.GetPropsAsDict(includePrivate=False, includeComputed=False) for bond in rdkit_mol.GetBonds()]
     )
     return Molecule(molecule_data, atom_data, bond_data, name)
 
 
 # Helper function to combine multiple Molecule instances into tables
 def bind_rows_map(table_fun, name_fun, id_colname, xs):
-
     names = map(name_fun, xs)
     tables = map(table_fun, xs)
-    return (
-        pd.concat(tables, axis=0, keys=names)
-        .reset_index(level=0)
-        .rename(columns={"level_0": id_colname})
-    )
+    return pd.concat(tables, axis=0, keys=names).reset_index(level=0).rename(columns={"level_0": id_colname})
 
 
 def mols_to_tables(mols):
     mol_id_colname = mols[0].special_colnames["mol_id"]
     assert all(mol.special_colnames["mol_id"] == mol_id_colname for mol in mols)
-    molecule_table = bind_rows_map(
-        Molecule.get_molecule_table, Molecule.get_name, mol_id_colname, mols
-    )
+    molecule_table = bind_rows_map(Molecule.get_molecule_table, Molecule.get_name, mol_id_colname, mols)
 
-    one_atom_table = bind_rows_map(
-        Molecule.get_one_atom_table, Molecule.get_name, mol_id_colname, mols
-    )
+    one_atom_table = bind_rows_map(Molecule.get_one_atom_table, Molecule.get_name, mol_id_colname, mols)
 
-    two_atom_table = bind_rows_map(
-        Molecule.get_two_atom_table, Molecule.get_name, mol_id_colname, mols
-    )
+    two_atom_table = bind_rows_map(Molecule.get_two_atom_table, Molecule.get_name, mol_id_colname, mols)
     return molecule_table, one_atom_table, two_atom_table
 
 
@@ -379,15 +340,10 @@ def tables2mols(molecule_table, one_atom_table, two_atom_table, special_colnames
     molecule_dict = dict(iter(molecule_table.groupby(mol_id_colname)))
     one_atom_dict = dict(iter(one_atom_table.groupby(mol_id_colname)))
     two_atom_dict = dict(iter(two_atom_table.groupby(mol_id_colname)))
-    return [
-        Molecule(molecule_dict[mol_id], one_atom_dict[mol_id], two_atom_dict[mol_id])
-        for mol_id in mol_ids
-    ]
+    return [Molecule(molecule_dict[mol_id], one_atom_dict[mol_id], two_atom_dict[mol_id]) for mol_id in mol_ids]
 
 
-def join_features(
-    molecule_table, one_atom_table, two_atom_table, element_feature, train_stats
-) -> pd.DataFrame:
+def join_features(molecule_table, one_atom_table, two_atom_table, element_feature, train_stats) -> pd.DataFrame:
     element_features = pd.read_csv(element_feature)
     train_stats = pd.read_csv(train_stats)
 
@@ -403,8 +359,7 @@ def join_features(
     # Scale features
     for feature in train_stats["feature"]:
         synthetic_one_atom[feature] = (
-            synthetic_one_atom[feature]
-            - train_stats.loc[train_stats["feature"] == feature, "center"].values[0]
+            synthetic_one_atom[feature] - train_stats.loc[train_stats["feature"] == feature, "center"].values[0]
         ) / train_stats.loc[train_stats["feature"] == feature, "scale"].values[0]
 
     mol_features = tables2mols(molecule_table, synthetic_one_atom, synthetic_two_atom)
@@ -414,7 +369,6 @@ def join_features(
 
 # Main function to create features from molecule data
 def feature_create(mol_df: pd.DataFrame, element_feature, train_stats) -> pd.DataFrame:
-
     # Convert the structures in mol_df to RDKit molecules and then to Molecule instances
     rdkit_mols = mol_df["structure"].apply(MolFromMolBlock).apply(AddHs)
     cauldron = [rdkit_to_cauldronoid(mol) for mol in rdkit_mols]
@@ -423,8 +377,6 @@ def feature_create(mol_df: pd.DataFrame, element_feature, train_stats) -> pd.Dat
     molecule_table, one_atom_table, two_atom_table = mols_to_tables(cauldron)
 
     # Process features and return the result DataFrame
-    result_df = join_features(
-        molecule_table, one_atom_table, two_atom_table, element_feature, train_stats
-    )
+    result_df = join_features(molecule_table, one_atom_table, two_atom_table, element_feature, train_stats)
 
     return result_df

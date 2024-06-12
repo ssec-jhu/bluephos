@@ -1,6 +1,6 @@
 import pandas as pd
-from rdkit.Chem import AllChem, MolFromSmiles, MolToSmiles
 from dplutils.pipeline import PipelineTask
+from rdkit.Chem import AllChem, MolFromSmiles, MolToSmiles
 
 
 def suzuki_couple(boronic_acid_smiles, halide_smiles):
@@ -9,7 +9,9 @@ def suzuki_couple(boronic_acid_smiles, halide_smiles):
     halide = MolFromSmiles(halide_smiles)
 
     # Define Suzuki coupling reaction using reaction SMARTS
-    suzuki_coupling_rxn_smarts = "[n:11][c:1]([X:4])[a:10].[c:2][B:5]([O:6])[O:7]>>[n:11][c:1]([c:2])[a:10].[B:5][X:4][O:6][O:7]"
+    suzuki_coupling_rxn_smarts = (
+        "[n:11][c:1]([X:4])[a:10].[c:2][B:5]([O:6])[O:7]>>[n:11][c:1]([c:2])[a:10].[B:5][X:4][O:6][O:7]"
+    )
     suzuki_coupling_rxn = AllChem.ReactionFromSmarts(suzuki_coupling_rxn_smarts)
 
     # Perform the reaction
@@ -39,20 +41,14 @@ def add_dummy_atoms(smiles):
 def generate_ligand_table(
     ligand_pair_df: pd.DataFrame,
 ) -> pd.DataFrame:
-
     result_data = []  # List to store the output data
 
     for _, ligand_pair in ligand_pair_df.iterrows():
-
-        ligand_set = suzuki_couple(
-            ligand_pair["acid_SMILES"], ligand_pair["halide_SMILES"]
-        )
+        ligand_set = suzuki_couple(ligand_pair["acid_SMILES"], ligand_pair["halide_SMILES"])
 
         ligands_with_binding_sites = []
         for ligand_smiles in ligand_set:
-            ligands_with_binding_sites = ligands_with_binding_sites + add_dummy_atoms(
-                ligand_smiles
-            )
+            ligands_with_binding_sites = ligands_with_binding_sites + add_dummy_atoms(ligand_smiles)
 
         # If the set is empty, do nothing
         if not ligands_with_binding_sites:
@@ -60,12 +56,7 @@ def generate_ligand_table(
 
         # Convert each ligand in the set to a row in the DataFrame and append to the list
         for i, ligand in enumerate(ligands_with_binding_sites):
-            ligand_identifier = (
-                ligand_pair["halide_identifier"]
-                + ligand_pair["acid_identifier"]
-                + "L"
-                + hex(i)[2:]
-            )
+            ligand_identifier = ligand_pair["halide_identifier"] + ligand_pair["acid_identifier"] + "L" + hex(i)[2:]
             result_data.append(
                 {
                     "ligand_identifier": ligand_identifier,
@@ -78,7 +69,7 @@ def generate_ligand_table(
             )
 
     # Create the DataFrame using the list of data
-    return(pd.DataFrame(result_data))
+    return pd.DataFrame(result_data)
 
 
 GenerateLigandTableTask = PipelineTask(
