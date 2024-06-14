@@ -60,7 +60,7 @@ def optimize(row):
 
             if bonds_maintained(mol) and isoctahedral(mol):
                 # Store the molecule in XYZ format in the DataFrame
-                logger.info("Go through check and will write to xyz")
+                logger.info(f"{mol_id} Go through check and will write to xyz")
                 return MolToXYZBlock(mol)
             else:
                 logger.error(f"{mol_id} failed geometry check on attemp {attempt + 1}")
