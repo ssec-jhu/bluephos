@@ -22,7 +22,7 @@ def get_gap(filename):
     if len(occ) == 0:
         return "FAILED"
 
-    occ = np.array([[float(l) for l in line.split()] for line in occ[0].rstrip("\n").split("\n")])
+    occ = np.array([[float(value) for value in line.split()] for line in occ[0].rstrip("\n").split("\n")])
 
     fl = np.flatnonzero(occ[:, 1])[-1]
 
@@ -42,7 +42,7 @@ def get_kr_wav(filename):
     if len(dipole) == 0:
         return None, None
 
-    dipole = np.array([[float(l) for l in line.split()] for line in dipole[0].rstrip("\n").split("\n")])
+    dipole = np.array([[float(value) for value in line.split()] for line in dipole[0].rstrip("\n").split("\n")])
 
     wav = dipole[0, 3]
 

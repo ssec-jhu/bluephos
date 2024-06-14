@@ -1,6 +1,6 @@
 import pytest
 import pandas as pd
-from unittest.mock import patch, mock_open, MagicMock
+from unittest.mock import patch, MagicMock
 from bluephos.tasks.dft_orca import dft_run, remove_second_row
 
 
