@@ -1,8 +1,11 @@
 import os.path
-from rdkit import Chem
-from rdkit.Chem import rdchem, AllChem, rdChemReactions, rdmolops, rdmolfiles
 
-CARBENE_SKELETON_SMARTS = "[Ir]135(<-[CH0](~N(~*)~*~2)~N(~*~2)~c~c~1)(<-[CH0](~N(~*)~*~4)~N(~*~4)~c~c~3)(<-[CH0](~N(~*)~*~6)~N(~*~6)~c~c~5)"
+from rdkit import Chem
+from rdkit.Chem import AllChem, rdchem, rdChemReactions, rdmolfiles, rdmolops
+
+CARBENE_SKELETON_SMARTS = (
+    "[Ir]135(<-[CH0](~N(~*)~*~2)~N(~*~2)~c~c~1)(<-[CH0](~N(~*)~*~4)~N(~*~4)~c~c~3)(<-[CH0](~N(~*)~*~6)~N(~*~6)~c~c~5)"
+)
 
 
 def make_bonds_dative(mol, target_elem="Ir"):
@@ -138,19 +141,15 @@ def compute_skeletons(isomer):
 
     carbene_skeleton = rdmolfiles.MolFromSmarts(CARBENE_SKELETON_SMARTS)
     transfer_conformation(carbene_mol, carbene_skeleton)
-    
+
     REACTION_PREFIX = "[Ir:1]1<-[n:2]:[n:3]~[c:4]:[c:5]~1>>[Ir:1]1<-[n:2]:"
     REACTION_SUFFIX = ":[c:5]~1"
 
     reactions = [
-        rdChemReactions.ReactionFromSmarts(f'{REACTION_PREFIX}{core}{REACTION_SUFFIX}') 
-        for core in ['[c:3]~[n:4]', '[n:3]~[n:4]', '[c:3]~[c:4]']
+        rdChemReactions.ReactionFromSmarts(f"{REACTION_PREFIX}{core}{REACTION_SUFFIX}")
+        for core in ["[c:3]~[n:4]", "[n:3]~[n:4]", "[c:3]~[c:4]"]
     ]
-    skeletons = (
-        [skeleton]
-        + [run_three_times(skeleton, reaction) for reaction in reactions]
-        + [carbene_skeleton]
-    )
+    skeletons = [skeleton] + [run_three_times(skeleton, reaction) for reaction in reactions] + [carbene_skeleton]
 
     return skeletons
 

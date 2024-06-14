@@ -1,9 +1,10 @@
-import pandas as pd
-from rdkit import Chem
-from rdkit.Chem import AddHs, MolFromSmiles, AllChem
-from rdkit.Chem.rdmolops import CombineMols, SanitizeMol, Kekulize
 from functools import reduce
+
+import pandas as pd
 from dplutils.pipeline import PipelineTask
+from rdkit import Chem
+from rdkit.Chem import AddHs, AllChem, MolFromSmiles
+from rdkit.Chem.rdmolops import CombineMols, Kekulize, SanitizeMol
 
 
 def ligate(ligands, metal_atom_element="Ir", metal_atom=None):
@@ -54,9 +55,7 @@ def smiles_to_sdf(df: pd.DataFrame) -> pd.DataFrame:
                 mol_block = Chem.MolToMolBlock(mol)
                 df.at[index, "structure"] = mol_block
             else:
-                print(
-                    f"Ligation failed for index {index}, identifier {row['ligand_identifier']}."
-                )
+                print(f"Ligation failed for index {index}, identifier {row['ligand_identifier']}.")
     return df
 
 

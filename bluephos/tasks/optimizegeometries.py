@@ -1,14 +1,16 @@
 import logging
-import pandas as pd
 from time import sleep
+
+import pandas as pd
+from ase.calculators.calculator import InputError
+from dplutils.pipeline import PipelineTask
 from rdkit import Chem
 from rdkit.Chem import AddHs, MolToXYZBlock
-from bluephos.modules.octahedral_embed import octahedral_embed
+
 from bluephos.modules.annotate_rdkit_with_ase import optimize_geometry
 from bluephos.modules.bond_length import bonds_maintained
 from bluephos.modules.isoctahedral import isoctahedral
-from ase.calculators.calculator import InputError
-from dplutils.pipeline import PipelineTask
+from bluephos.modules.octahedral_embed import octahedral_embed
 
 try:
     from xtb.ase.calculator import XTB
@@ -18,6 +20,7 @@ except ImportError:
 
 
 logger = logging.getLogger(__name__)
+
 
 # Timer code left blank pending Alexander's clarification on timing requirements
 def optimize(row):
@@ -35,11 +38,7 @@ def optimize(row):
 
     mol = row["structure"]
 
-    if (
-        pd.isna(mol)
-        or Chem.MolFromMolBlock(mol) is None
-        or Chem.MolFromMolBlock(mol).GetNumAtoms() > 200
-    ):
+    if pd.isna(mol) or Chem.MolFromMolBlock(mol) is None or Chem.MolFromMolBlock(mol).GetNumAtoms() > 200:
         logger.warning(f"Molecule {mol_id} is invalid or too large.")
         return "failed"
 
@@ -52,9 +51,7 @@ def optimize(row):
         try:
             octahedral_embed(mol, isomer)
             if XTB is not None:
-                optimize_geometry(
-                    mol, XTB(method="GFN2-xTB"), conformation_index=0, uhf=2
-                )
+                optimize_geometry(mol, XTB(method="GFN2-xTB"), conformation_index=0, uhf=2)
             else:
                 logger.error("Proceeding without xTB functionality.")
 
@@ -67,15 +64,11 @@ def optimize(row):
                 return "failed"
 
         except InputError:
-            logger.error(
-                f"InputError for {mol_id}, will attempt {3 - (attempt+1)} more times"
-            )
+            logger.error(f"InputError for {mol_id}, will attempt {3 - (attempt+1)} more times")
             sleep(10)
             continue
         except ValueError:
-            logger.error(
-                f"ValueError, probably because ConstrainedEmbed couldn't embed {mol_id}"
-            )
+            logger.error(f"ValueError, probably because ConstrainedEmbed couldn't embed {mol_id}")
             return "failed"
         except Exception as e:
             logger.exception(f"Unhandled exception for {mol_id}: {str(e)}")

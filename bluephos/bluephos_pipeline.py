@@ -1,13 +1,13 @@
 __doc__ = """"BluePhos Discovery Pipeline"""
 
 import pandas as pd
-from dplutils.pipeline.ray import RayStreamGraphExecutor
 from dplutils import cli
+from dplutils.pipeline.ray import RayStreamGraphExecutor
 
 from bluephos.tasks.generateligandtable import GenerateLigandTableTask
-from bluephos.tasks.smiles2sdf import Smiles2SDFTask
 from bluephos.tasks.nn import NNTask
 from bluephos.tasks.optimizegeometries import OptimizeGeometriesTask
+from bluephos.tasks.smiles2sdf import Smiles2SDFTask
 from bluephos.tasks.dft_orca import DFTTask
 
 
@@ -59,9 +59,7 @@ def get_pipeline(
 if __name__ == "__main__":
     ap = cli.get_argparser(description=__doc__)
     ap.add_argument("--halides", required=True, help="CSV file containing halides data")
-    ap.add_argument(
-        "--acids", required=True, help="CSV file containing boronic acids data"
-    )
+    ap.add_argument("--acids", required=True, help="CSV file containing boronic acids data")
     ap.add_argument("--features", required=True, help="Element feature file")
     ap.add_argument("--train", required=True, help="Train stats file")
     ap.add_argument("--weights", required=True, help="Full energy model weights")
