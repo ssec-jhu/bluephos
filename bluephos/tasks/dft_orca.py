@@ -8,9 +8,7 @@ from bluephos.modules.extract import extract
 from dplutils.pipeline import PipelineTask
 
 # Configure logging
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
 # DEBUG = True retains DFT details for review; False only keeps final results.
 DEBUG = False
@@ -41,7 +39,6 @@ BASE_ORCA_INPUT = """!B3LYP LANL2DZ
 
 
 def create_orca_input_files(temp_dir, xyz_value):
-
     """Generate ORCA input files based on the template and provided molecular structure."""
 
     relax_input_file = os.path.join(temp_dir, "relax.inp")
@@ -49,29 +46,27 @@ def create_orca_input_files(temp_dir, xyz_value):
     base_input_file = os.path.join(temp_dir, "base.inp")
     relax_xyz_file = os.path.join(temp_dir, "relax.xyz")
 
-    with open(relax_input_file, 'w') as file:
+    with open(relax_input_file, "w") as file:
         file.write(ORCA_INPUT_OPT.format(xyz_value))
 
-    with open(triplet_input_file, 'w') as file:
+    with open(triplet_input_file, "w") as file:
         file.write(TRIPLET_ORCA_INPUT.format(relax_xyz_file))
 
-    with open(base_input_file, 'w') as file:
+    with open(base_input_file, "w") as file:
         file.write(BASE_ORCA_INPUT.format(relax_xyz_file))
 
     return relax_input_file, triplet_input_file, base_input_file
 
 
 def run_orca_command(input_file, output_file, orca_path):
-
     """Execute the ORCA software command using subprocess to perform quantum chemical calculations."""
 
     command = [orca_path, input_file]
-    with open(output_file, 'w') as output:
+    with open(output_file, "w") as output:
         subprocess.run(command, stdout=output, stderr=subprocess.PIPE, check=True, text=True)
 
 
 def run_dft_calculation(temp_dir, orca_path, xyz_value, base_name):
-
     """Run DFT calculations for the specified molecule using ORCA."""
 
     relax_input, triplet_input, base_input = create_orca_input_files(temp_dir, xyz_value)
@@ -93,17 +88,17 @@ def run_dft_calculation(temp_dir, orca_path, xyz_value, base_name):
 def remove_second_row(xyz):
     """Remove the second row from the xyz data to comply with ORCA input requirements."""
 
-    lines = xyz.split('\n')
+    lines = xyz.split("\n")
     if len(lines) > 1:
         lines.pop(1)
-    lines.append('*')  # Add a new line with '*'
-    return '\n'.join(lines)
+    lines.append("*")  # Add a new line with '*'
+    return "\n".join(lines)
 
 
 def process_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     """Process each valid entry in the DataFrame for DFT calculations."""
 
-    orca_path = os.path.join(os.getenv('EBROOTORCA'), 'orca')
+    orca_path = os.path.join(os.getenv("EBROOTORCA"), "orca")
 
     Run = False
     for index, row in df.iterrows():
@@ -115,7 +110,6 @@ def process_dataframe(df: pd.DataFrame) -> pd.DataFrame:
             base_name = row["ligand_identifier"]
 
         if base_name:
-            
             if DEBUG:
                 temp_dir = tempfile.mkdtemp()
             else:
