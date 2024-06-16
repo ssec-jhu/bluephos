@@ -11,13 +11,13 @@ from dplutils.pipeline import PipelineTask
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
 # DEBUG = True retains DFT details for review; False only keeps final results.
-DEBUG = False
+DEBUG = True
 
 # Constants and configuration for ORCA input files, need to be customized for specific calculations
 ORCA_INPUT_OPT = """!B3LYP LANL2DZ OPT
 %PAL NPROCS 48 END
 %geom
-MaxIter 200
+MaxIter 1
 TolE 4e-5 # Energy change (a.u.) (about 1e-3 eV)
 TolRMSG 2e-4 # RMS gradient (a.u.)
 TolMaxG 4e-4 # Max. element of gradient (a.u.) (about 0.02 ev/A)
@@ -100,11 +100,8 @@ def process_dataframe(df: pd.DataFrame) -> pd.DataFrame:
 
     orca_path = os.path.join(os.getenv("EBROOTORCA"), "orca")
 
-    Run = False
     for index, row in df.iterrows():
-        if Run:
-            break
-        Run = True
+
         base_name = None
         if row["xyz"] not in ["failed", None]:
             base_name = row["ligand_identifier"]
