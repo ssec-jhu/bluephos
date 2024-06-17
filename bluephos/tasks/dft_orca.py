@@ -11,13 +11,13 @@ from dplutils.pipeline import PipelineTask
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
 # DEBUG = True retains DFT details for review; False only keeps final results.
-DEBUG = True
+DEBUG = False
 
 # Constants and configuration for ORCA input files, need to be customized for specific calculations
 ORCA_INPUT_OPT = """!B3LYP LANL2DZ OPT
 %PAL NPROCS 48 END
 %geom
-MaxIter 1
+MaxIter 200
 TolE 4e-5 # Energy change (a.u.) (about 1e-3 eV)
 TolRMSG 2e-4 # RMS gradient (a.u.)
 TolMaxG 4e-4 # Max. element of gradient (a.u.) (about 0.02 ev/A)
@@ -28,12 +28,12 @@ END
 """
 
 TRIPLET_ORCA_INPUT = """!B3LYP LANL2DZ
-%PAL NPROCS 4 END
+%PAL NPROCS 48 END
 * xyzfile 0 3 {0}
 """
 
 BASE_ORCA_INPUT = """!B3LYP LANL2DZ
-%PAL NPROCS 4 END
+%PAL NPROCS 48 END
 * xyzfile 0 1 {0}
 """
 
@@ -101,7 +101,6 @@ def process_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     orca_path = os.path.join(os.getenv("EBROOTORCA"), "orca")
 
     for index, row in df.iterrows():
-
         base_name = None
         if row["xyz"] not in ["failed", None]:
             base_name = row["ligand_identifier"]
@@ -110,7 +109,8 @@ def process_dataframe(df: pd.DataFrame) -> pd.DataFrame:
             if DEBUG:
                 temp_dir = tempfile.mkdtemp()
             else:
-                temp_dir = tempfile.TemporaryDirectory()
+                temp_dir_obj = tempfile.TemporaryDirectory()
+                temp_dir = temp_dir_obj.name
 
             try:
                 xyz_value = remove_second_row(row["xyz"])
