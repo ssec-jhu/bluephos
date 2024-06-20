@@ -17,6 +17,7 @@ DEBUG = True
 # Constants
 MAX_DEFAULT_CPUS = 48  # Maximum default CPUs to use if not specified by environment
 
+
 def get_orca_templates(n_cpus, xyz_value, relax_xyz_file):
     ORCA_INPUT_OPT = f"""!B3LYP LANL2DZ OPT
 %PAL NPROCS {n_cpus} END
@@ -43,6 +44,7 @@ END
 
     return ORCA_INPUT_OPT, TRIPLET_ORCA_INPUT, BASE_ORCA_INPUT
 
+
 def create_orca_input_files(temp_dir, xyz_value):
     """
     Generates ORCA input files with appropriate configurations based on the given parameters.
@@ -57,9 +59,8 @@ def create_orca_input_files(temp_dir, xyz_value):
 
     # Determine the number of CPUs to use based on system capabilities and environment settings
     n_cpu_custom = min(multiprocessing.cpu_count(), MAX_DEFAULT_CPUS)
-    n_cpus = os.getenv('OMP_NUM_THREADS', str(n_cpu_custom))
+    n_cpus = os.getenv("OMP_NUM_THREADS", str(n_cpu_custom))
     print(f"Using {n_cpus} CPUs for computation")
-
 
     # Prepare file paths for the ORCA input files
     relax_input_file = os.path.join(temp_dir, "relax.inp")
@@ -131,7 +132,7 @@ def process_dataframe(df: pd.DataFrame) -> pd.DataFrame:
             continue
 
         if DEBUG:
-                temp_dir = tempfile.mkdtemp()
+            temp_dir = tempfile.mkdtemp()
         else:
             temp_dir_obj = tempfile.TemporaryDirectory()
             temp_dir = temp_dir_obj.name
