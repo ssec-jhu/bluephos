@@ -1,3 +1,4 @@
+import os
 import pytest
 import pandas as pd
 from unittest.mock import patch
@@ -35,6 +36,7 @@ def test_dft_run(mock_run_orca_command, setup_dataframe, tmp_path):
     mock_run_orca_command.side_effect = lambda *args, **kwargs: create_test_data(tmp_path)
     triplet_output_file = tmp_path / "triplet_output.txt"
     base_output_file = tmp_path / "base_output.txt"
+    os.environ["EBROOTORCA"] = "/mock/path/to/orca"
 
     # Assume dft_run now accepts an output file path as an argument and reads from it
     df = dft_run(setup_dataframe)
