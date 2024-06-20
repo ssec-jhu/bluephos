@@ -60,7 +60,7 @@ def create_orca_input_files(temp_dir, xyz_value):
     # Determine the number of CPUs to use based on system capabilities and environment settings
     n_cpu_custom = min(multiprocessing.cpu_count(), MAX_DEFAULT_CPUS)
     n_cpus = os.getenv("OMP_NUM_THREADS", str(n_cpu_custom))
-    print(f"Using {n_cpus} CPUs for computation")
+    logging.info(f"Using {n_cpus} CPUs for computation")
 
     # Prepare file paths for the ORCA input files
     relax_input_file = os.path.join(temp_dir, "relax.inp")
@@ -163,4 +163,5 @@ DFTTask = PipelineTask(
     "dft_run",
     dft_run,
     batch_size=1,
+    num_cpus=48,
 )
