@@ -2,58 +2,81 @@ import os
 import pandas as pd
 import numpy as np
 import subprocess
+import multiprocessing
 import logging
 import tempfile
-from bluephos.modules.extract import extract
+from bluephos.modules.dft_extract import extract
 from dplutils.pipeline import PipelineTask
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
 # DEBUG = True retains DFT details for review; False only keeps final results.
-DEBUG = False
+DEBUG = True
 
-# Constants and configuration for ORCA input files, need to be customized for specific calculations
-ORCA_INPUT_OPT = """!B3LYP LANL2DZ OPT
-%PAL NPROCS 48 END
+# Constants
+MAX_DEFAULT_CPUS = 48  # Maximum default CPUs to use if not specified by environment
+
+def get_orca_templates(n_cpus, xyz_value, relax_xyz_file):
+    ORCA_INPUT_OPT = f"""!B3LYP LANL2DZ OPT
+%PAL NPROCS {n_cpus} END
 %geom
-MaxIter 200
+MaxIter 1
 TolE 4e-5 # Energy change (a.u.) (about 1e-3 eV)
 TolRMSG 2e-4 # RMS gradient (a.u.)
 TolMaxG 4e-4 # Max. element of gradient (a.u.) (about 0.02 ev/A)
 TolRMSD 4e-2 # RMS displacement (a.u.)
 TolMaxD 8e-2 # Max. displacement (a.u.)
 END
-* xyz 0 3 {0}
+* xyz 0 3 {xyz_value}
 """
 
-TRIPLET_ORCA_INPUT = """!B3LYP LANL2DZ
-%PAL NPROCS 48 END
-* xyzfile 0 3 {0}
+    TRIPLET_ORCA_INPUT = f"""!B3LYP LANL2DZ
+%PAL NPROCS {n_cpus} END
+* xyzfile 0 3 {relax_xyz_file}
 """
 
-BASE_ORCA_INPUT = """!B3LYP LANL2DZ
-%PAL NPROCS 48 END
-* xyzfile 0 1 {0}
+    BASE_ORCA_INPUT = f"""!B3LYP LANL2DZ
+%PAL NPROCS {n_cpus} END
+* xyzfile 0 1 {relax_xyz_file}
 """
 
+    return ORCA_INPUT_OPT, TRIPLET_ORCA_INPUT, BASE_ORCA_INPUT
 
 def create_orca_input_files(temp_dir, xyz_value):
-    """Generate ORCA input files based on the template and provided molecular structure."""
+    """
+    Generates ORCA input files with appropriate configurations based on the given parameters.
 
+    Parameters:
+    - temp_dir (str): The directory where the ORCA input files will be saved.
+    - xyz_value (str): The XYZ coordinates for the molecule, formatted as required by ORCA.
+
+    Returns:
+    - tuple: Paths to the generated ORCA input files (relax.inp, triplet.inp, base.inp).
+    """
+
+    # Determine the number of CPUs to use based on system capabilities and environment settings
+    n_cpu_custom = min(multiprocessing.cpu_count(), MAX_DEFAULT_CPUS)
+    n_cpus = os.getenv('OMP_NUM_THREADS', str(n_cpu_custom))
+    print(f"Using {n_cpus} CPUs for computation")
+
+
+    # Prepare file paths for the ORCA input files
     relax_input_file = os.path.join(temp_dir, "relax.inp")
     triplet_input_file = os.path.join(temp_dir, "triplet.inp")
     base_input_file = os.path.join(temp_dir, "base.inp")
     relax_xyz_file = os.path.join(temp_dir, "relax.xyz")
 
+    # Generate ORCA input configurations using the provided templates
+    ORCA_INPUT_OPT, TRIPLET_ORCA_INPUT, BASE_ORCA_INPUT = get_orca_templates(n_cpus, xyz_value, relax_xyz_file)
+
+    # Write the configurations to the respective files
     with open(relax_input_file, "w") as file:
-        file.write(ORCA_INPUT_OPT.format(xyz_value))
-
+        file.write(ORCA_INPUT_OPT)
     with open(triplet_input_file, "w") as file:
-        file.write(TRIPLET_ORCA_INPUT.format(relax_xyz_file))
-
+        file.write(TRIPLET_ORCA_INPUT)
     with open(base_input_file, "w") as file:
-        file.write(BASE_ORCA_INPUT.format(relax_xyz_file))
+        file.write(BASE_ORCA_INPUT)
 
     return relax_input_file, triplet_input_file, base_input_file
 
@@ -104,27 +127,28 @@ def process_dataframe(df: pd.DataFrame) -> pd.DataFrame:
         base_name = None
         if row["xyz"] not in ["failed", None]:
             base_name = row["ligand_identifier"]
+        else:
+            continue
 
-        if base_name:
-            if DEBUG:
+        if DEBUG:
                 temp_dir = tempfile.mkdtemp()
+        else:
+            temp_dir_obj = tempfile.TemporaryDirectory()
+            temp_dir = temp_dir_obj.name
+
+        try:
+            xyz_value = remove_second_row(row["xyz"])
+            logging.info(f"Starting DFT calculation for {base_name}...")
+            triplet_output, base_output = run_dft_calculation(temp_dir, orca_path, xyz_value, base_name)
+
+            # Extract energy difference from output and add it to dataframe
+            df.at[index, "Energy Diff"] = extract(triplet_output, base_output)
+        finally:
+            if DEBUG:
+                logging.info(f"Temporary files for {base_name} kept at {temp_dir} for debugging.")
             else:
-                temp_dir_obj = tempfile.TemporaryDirectory()
-                temp_dir = temp_dir_obj.name
-
-            try:
-                xyz_value = remove_second_row(row["xyz"])
-                logging.info(f"Starting DFT calculation for {base_name}...")
-                triplet_output, base_output = run_dft_calculation(temp_dir, orca_path, xyz_value, base_name)
-
-                # Extract energy difference from output and add it to dataframe
-                df.at[index, "Energy Diff"] = extract(triplet_output, base_output)
-            finally:
-                if DEBUG:
-                    logging.info(f"Temporary files for {base_name} kept at {temp_dir} for debugging.")
-                else:
-                    if isinstance(temp_dir, tempfile.TemporaryDirectory):
-                        temp_dir.cleanup()
+                if isinstance(temp_dir, tempfile.TemporaryDirectory):
+                    temp_dir.cleanup()
 
     return df
 
