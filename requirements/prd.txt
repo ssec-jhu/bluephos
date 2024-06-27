@@ -1,6 +1,6 @@
 ase==3.23.0
-dplutils==0.5.2
-pandas==2.1.4
+dplutils==0.5.5
+pandas==2.2.2
 ray[default]==2.24.0
 rdkit_pypi==2022.9.5
 torch==2.3.1
