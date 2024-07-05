@@ -42,7 +42,6 @@ Total Energy       :     -4074.79546374 Eh        -273431.343322 eV"""
 @patch("bluephos.tasks.dft_orca.OrcaCalculator.extract_results")
 @patch("tempfile.mkdtemp")
 def test_dft_run(mock_mkdtemp, mock_extract_results, setup_dataframe, tmp_path):
-
     # Setup mock to simulate ORCA command output
     mock_extract_results.side_effect = lambda temp_dir, base_name, xyz: -273432.343322 + 273431.343322
 
