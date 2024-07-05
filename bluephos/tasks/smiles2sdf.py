@@ -9,8 +9,8 @@ from rdkit.Chem import AddHs, AllChem, MolFromSmiles
 from rdkit.Chem.rdmolops import CombineMols, Kekulize, SanitizeMol
 
 
-# Get a logger instance
-logger = logging.getLogger(__name__)
+# Setup logging and get a logger instance
+logger = log_config.setup_logging(__name__)
 
 
 def ligate(ligands, metal_atom_element="Ir", metal_atom=None):

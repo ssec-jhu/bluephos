@@ -92,6 +92,13 @@ def rerun_candidate_generator(input_dir, t_nn, t_ste, t_ed):
                             yield candidate_row_df
 
 
+def get_generator(halides, acids, input_dir, t_nn, t_ste, t_ed):
+    if not input_dir:
+        return lambda: ligand_pair_generator(halides, acids)
+    else:
+        return lambda: rerun_candidate_generator(input_dir, t_nn, t_ste, t_ed)
+
+
 def get_pipeline(
     halides,  # Path to the halides CSV file
     acids,  # Path to the acids CSV file
@@ -105,23 +112,6 @@ def get_pipeline(
     t_ste=None,  # Threshold for 'ste'. Defaults to None
     t_ed=None,  # Threshold for 'energy diff'. Defaults to None
 ):
-    # if not input_dir:
-    #     # Use ligand_pair_generator if input_dir is not provided
-    #     steps = [
-    #         GenerateLigandTableTask,
-    #         Smiles2SDFTask,
-    #         NNTask,
-    #         OptimizeGeometriesTask,
-    #         DFTTask,
-    #     ]
-    #     generator = lambda: ligand_pair_generator(halides, acids)
-    # else:
-    #     # Use rerun_candidate_generator if input_dir is provided
-    #     steps = [
-    #         OptimizeGeometriesTask,
-    #         DFTTask,
-    #     ]
-    #     generator = lambda: rerun_candidate_generator(input_dir, t_nn, t_ste, t_ed)
     steps = (
         [
             GenerateLigandTableTask,
@@ -136,17 +126,8 @@ def get_pipeline(
             DFTTask,
         ]
     )
-    generator = (
-        lambda: ligand_pair_generator(halides, acids)
-        if not input_dir
-        else rerun_candidate_generator(input_dir, t_nn, t_ste, t_ed)
-    )
+    generator = get_generator(halides, acids, input_dir, t_nn, t_ste, t_ed)
     pipeline_executor = RayStreamGraphExecutor(graph=steps, generator=generator)
-
-    pipeline_executor = RayStreamGraphExecutor(
-        graph=steps,
-        generator=generator,
-    )
 
     context_dict = {
         "halides": halides,

@@ -2,7 +2,7 @@ import os
 import pytest
 import pandas as pd
 from unittest.mock import patch
-from bluephos.tasks.dft_orca import dft_run, remove_second_row, get_dft_calculator, OrcaCalculator, ASECalculator
+from bluephos.tasks.dft_orca import dft_run, remove_second_row, OrcaCalculator
 
 
 @pytest.fixture
@@ -42,7 +42,6 @@ Total Energy       :     -4074.79546374 Eh        -273431.343322 eV"""
 @patch("bluephos.tasks.dft_orca.OrcaCalculator.extract_results")
 @patch("tempfile.mkdtemp")
 def test_dft_run(mock_mkdtemp, mock_extract_results, setup_dataframe, tmp_path):
-    ligand_identifier = setup_dataframe.loc[0, "ligand_identifier"]
 
     # Setup mock to simulate ORCA command output
     mock_extract_results.side_effect = lambda temp_dir, base_name, xyz: -273432.343322 + 273431.343322
@@ -65,8 +64,6 @@ def test_dft_run(mock_mkdtemp, mock_extract_results, setup_dataframe, tmp_path):
 def test_extraction_from_real_output(mock_extract_results, tmp_path):
     ligand_identifier = "H11A1L9"
     create_test_data(tmp_path, ligand_identifier)
-    triplet_output_path = tmp_path / f"{ligand_identifier}_triplet_output.txt"
-    base_output_path = tmp_path / f"{ligand_identifier}_base_output.txt"
 
     # Assuming extract function is expecting paths to both output files
     expected_diff = -273432.343322 + 273431.343322  # Calculation based on provided values

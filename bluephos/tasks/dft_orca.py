@@ -7,8 +7,8 @@ import bluephos.modules.log_config as log_config
 from bluephos.modules.dft_calculators import OrcaCalculator, ASECalculator, remove_second_row
 from dplutils.pipeline import PipelineTask
 
-# Get a logger instance
-logger = logging.getLogger(__name__)
+# Setup logging and get a logger instance
+logger = log_config.setup_logging(__name__)
 
 # DEBUG = True retains DFT details for review; False only keeps final results
 DEBUG = True

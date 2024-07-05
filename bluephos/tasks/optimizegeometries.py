@@ -18,7 +18,8 @@ except ImportError:
     logging.warning("xtb not installed. Limited functionality available.")
 
 
-logger = logging.getLogger(__name__)
+# Setup logging and get a logger instance
+logger = log_config.setup_logging(__name__)
 
 
 def calculate_ste(mol):
@@ -27,7 +28,7 @@ def calculate_ste(mol):
         annotate_molecule_property(mol, "singlet_energy", calc, lambda x: x.get_potential_energy(), uhf=0)
         annotate_molecule_property(mol, "triplet_energy", calc, lambda x: x.get_potential_energy(), uhf=2)
         return mol.GetDoubleProp("triplet_energy") - mol.GetDoubleProp("singlet_energy")
-    except Exception as e:
+    except Exception:
         logger.exception("Failed to calculate singlet-triplet energy gap ")
         return None
 
