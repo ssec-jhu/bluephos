@@ -1,4 +1,3 @@
-import logging
 import bluephos.modules.log_config as log_config
 from time import sleep
 import pandas as pd
@@ -11,15 +10,17 @@ from bluephos.modules.bond_length import bonds_maintained
 from bluephos.modules.isoctahedral import isoctahedral
 from bluephos.modules.octahedral_embed import octahedral_embed
 
+# Setup logging and get a logger instance
+logger = log_config.setup_logging(__name__)
+
 try:
     from xtb.ase.calculator import XTB
 except ImportError:
     XTB = None
-    logging.warning("xtb not installed. Limited functionality available.")
+    logger.warning("xtb not installed. Limited functionality available.")
 
 
-# Setup logging and get a logger instance
-logger = log_config.setup_logging(__name__)
+
 
 
 def calculate_ste(mol):

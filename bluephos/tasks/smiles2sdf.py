@@ -1,7 +1,5 @@
 from functools import reduce
-
 import pandas as pd
-import logging
 import bluephos.modules.log_config as log_config
 from dplutils.pipeline import PipelineTask
 from rdkit import Chem

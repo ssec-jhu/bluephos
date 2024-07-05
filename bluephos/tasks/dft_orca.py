@@ -1,5 +1,4 @@
 import os
-import logging
 import tempfile
 import multiprocessing
 import pandas as pd
@@ -48,7 +47,7 @@ def process_dataframe(row, t_ste, dft_calculator):
     energy_diff = row["energy diff"]
 
     if ste is None or abs(ste) >= t_ste or energy_diff is not None:
-        logging.info(f"Skipping DFT on molecule {mol_id} based on z or t_ste conditions.")
+        logger.info(f"Skipping DFT on molecule {mol_id} based on z or t_ste conditions.")
         return row
 
     if row["xyz"] not in ["failed", None]:
@@ -64,13 +63,13 @@ def process_dataframe(row, t_ste, dft_calculator):
 
     try:
         xyz_value = remove_second_row(row["xyz"])
-        logging.info(f"Starting DFT calculation for {base_name}...")
+        logger.info(f"Starting DFT calculation for {base_name}...")
         energy_diff = dft_calculator.extract_results(temp_dir, base_name, xyz_value)
         row["energy diff"] = energy_diff
         return row
     finally:
         if DEBUG:
-            logging.info(f"Temporary files for {base_name} kept at {temp_dir} for debugging.")
+            logger.info(f"Temporary files for {base_name} kept at {temp_dir} for debugging.")
         else:
             if isinstance(temp_dir, tempfile.TemporaryDirectory):
                 temp_dir.cleanup()
