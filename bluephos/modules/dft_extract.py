@@ -1,9 +1,10 @@
 import re
 import numpy as np
 from glob import iglob
-import logging
+import bluephos.modules.log_config as log_config
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+# Setup logging and get a logger instance
+logger = log_config.setup_logging(__name__)
 
 
 def get_total_energy(filename):
@@ -21,7 +22,7 @@ def get_total_energy(filename):
         energy = re.findall(r"Total Energy\s*:\s*[\-0-9\.]+ Eh\s*([\-0-9\.]+) eV", content)[0]
         return float(energy)
     except (IndexError, ValueError, FileNotFoundError) as e:
-        logging.error(f"Error reading total energy from {filename}: {e}")
+        logger.error(f"Error reading total energy from {filename}: {e}")
         raise
 
 
@@ -53,7 +54,7 @@ def get_gap(filename):
 
         return occ[fl + 1, 3] - occ[fl, 3]
     except (IndexError, ValueError, FileNotFoundError) as e:
-        logging.error(f"Error reading energy gap from {filename}: {e}")
+        logger.error(f"Error reading energy gap from {filename}: {e}")
         return "FAILED"
 
 
@@ -100,7 +101,7 @@ def get_kr_wav(filename):
 
         return wav, k_r
     except (IndexError, ValueError, FileNotFoundError) as e:
-        logging.error(f"Error reading k_r and wavelength from {filename}: {e}")
+        logger.error(f"Error reading k_r and wavelength from {filename}: {e}")
         return None, None
 
 
@@ -118,7 +119,7 @@ def extract(triplet_output, base_output):
         Ediff = get_total_energy(triplet_output) - get_total_energy(base_output)
         return Ediff
     except Exception as e:
-        logging.error(f"Error processing files: {triplet_output}, {base_output}. Error: {e}")
+        logger.error(f"Error processing files: {triplet_output}, {base_output}. Error: {e}")
         return None
 
 
@@ -136,7 +137,7 @@ def process_files(file_pattern):
         Ediff = extract(triplet_filename, filename)
         if Ediff is not None:
             wav_TDDFT, kr = get_kr_wav(filename)
-            logging.info(f"{filename.split('/')[-2]}: Ediff={Ediff}, kr={kr}")
+            logger.info(f"{filename.split('/')[-2]}: Ediff={Ediff}, kr={kr}")
 
 
 if __name__ == "__main__":
