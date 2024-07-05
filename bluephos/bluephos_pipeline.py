@@ -1,6 +1,8 @@
 __doc__ = """"BluePhos Discovery Pipeline"""
 
 import pandas as pd
+import os
+import json
 from dplutils import cli
 from dplutils.pipeline.ray import RayStreamGraphExecutor
 
@@ -11,46 +13,155 @@ from bluephos.tasks.smiles2sdf import Smiles2SDFTask
 from bluephos.tasks.dft_orca import DFTTask
 
 
+def initialize_dataframe():
+    """Initialize a DataFrame with the required columns."""
+    columns = [
+        "ligand_identifier",
+        "ligand_SMILES",
+        "halide_identifier",
+        "halide_SMILES",
+        "acid_identifier",
+        "acid_SMILES",
+        "structure",
+        "z",
+        "xyz",
+        "ste",
+        "energy diff",
+    ]
+    return pd.DataFrame(columns=columns)
+
+
 def ligand_pair_generator(halides_file, acids_file):
+    """
+    Generate ligand pairs from halides and acids files.
+
+    Args:
+        halides_file (str): Path to the CSV file containing halides data.
+        acids_file (str): Path to the CSV file containing acids data.
+
+    Yields:
+        DataFrame: A DataFrame with a single row representing a ligand pair.
+    """
     halides_df = pd.read_csv(halides_file)
     acids_df = pd.read_csv(acids_file)
     for _, halide in halides_df.iterrows():
         for _, acid in acids_df.iterrows():
-            ligand_pair = {
-                "halide_identifier": halide["halide_identifier"],
-                "halide_SMILES": halide["halide_SMILES"],
-                "acid_identifier": acid["acid_identifier"],
-                "acid_SMILES": acid["acid_SMILES"],
-            }
-            yield (pd.DataFrame([ligand_pair]))
+            ligand_pair_df = initialize_dataframe()
+
+            ligand_pair_df.at[0, "halide_identifier"] = halide["halide_identifier"]
+            ligand_pair_df.at[0, "halide_SMILES"] = halide["halide_SMILES"]
+            ligand_pair_df.at[0, "acid_identifier"] = acid["acid_identifier"]
+            ligand_pair_df.at[0, "acid_SMILES"] = acid["acid_SMILES"]
+
+            yield ligand_pair_df
+
+
+def rerun_candidate_generator(input_dir, t_nn, t_ste, t_ed):
+    """
+    Generates candidate DataFrames from parquet files in the input directory.
+
+    Core Algorithm:
+    - If the absolute value of 'z' is less than t_nn,
+    - and 'ste' is None or its absolute value is less than t_ste,
+    - and 'energy diff' is None,
+    This row is then added to a new DataFrame and yielded for re-run.
+
+    Additional Context:
+    1. All valid ligand pairs should already have run through the NN process and have a 'z' score.
+    2. If a row's 'ste' is None, then it's 'energy diff' should also be None.
+
+    Args:
+        input_dir (str): Directory containing input parquet files.
+        t_nn (float): Threshold for 'z' score.
+        t_ste (float): Threshold for 'ste'.
+        t_ed (float): Threshold for 'energy diff'.
+
+    Yields:
+        DataFrame: A single-row DataFrame containing candidate data.
+    """
+    for file in os.listdir(input_dir):
+        if file.endswith(".parquet"):
+            df = pd.read_parquet(os.path.join(input_dir, file))
+            for _, row in df.iterrows():
+                if row["z"] is not None and abs(row["z"]) < t_nn:
+                    if row["ste"] is None or abs(row["ste"]) < t_ste:
+                        if row["energy diff"] is None:
+                            candidate_row_df = initialize_dataframe()
+                            for col in row.index:
+                                candidate_row_df.at[0, col] = row[col]
+                            yield candidate_row_df
 
 
 def get_pipeline(
-    halides,
-    acids,
-    element_features,
-    train_stats,
-    model_weights,
+    halides,  # Path to the halides CSV file
+    acids,  # Path to the acids CSV file
+    element_features,  # Path to the element features file
+    train_stats,  # Path to the train stats file
+    model_weights,  # Path to the model weights file
+    out_dir=None,  # Output directory for results
+    input_dir=None,  # Directory containing input parquet files(rerun). Defaults to None.
+    package="orca",  # DFT package to use. Defaults to "orca".
+    t_nn=None,  # Threshold for 'z' score. Defaults to None
+    t_ste=None,  # Threshold for 'ste'. Defaults to None
+    t_ed=None,  # Threshold for 'energy diff'. Defaults to None
 ):
-    steps = [
-        GenerateLigandTableTask,
-        Smiles2SDFTask,
-        NNTask,
-        OptimizeGeometriesTask,
-        DFTTask,
-        # Add additional tasks here as needed
-    ]
+    # if not input_dir:
+    #     # Use ligand_pair_generator if input_dir is not provided
+    #     steps = [
+    #         GenerateLigandTableTask,
+    #         Smiles2SDFTask,
+    #         NNTask,
+    #         OptimizeGeometriesTask,
+    #         DFTTask,
+    #     ]
+    #     generator = lambda: ligand_pair_generator(halides, acids)
+    # else:
+    #     # Use rerun_candidate_generator if input_dir is provided
+    #     steps = [
+    #         OptimizeGeometriesTask,
+    #         DFTTask,
+    #     ]
+    #     generator = lambda: rerun_candidate_generator(input_dir, t_nn, t_ste, t_ed)
+    steps = (
+        [
+            GenerateLigandTableTask,
+            Smiles2SDFTask,
+            NNTask,
+            OptimizeGeometriesTask,
+            DFTTask,
+        ]
+        if not input_dir
+        else [
+            OptimizeGeometriesTask,
+            DFTTask,
+        ]
+    )
+    generator = (
+        lambda: ligand_pair_generator(halides, acids)
+        if not input_dir
+        else rerun_candidate_generator(input_dir, t_nn, t_ste, t_ed)
+    )
+    pipeline_executor = RayStreamGraphExecutor(graph=steps, generator=generator)
+
     pipeline_executor = RayStreamGraphExecutor(
         graph=steps,
-        generator=lambda: ligand_pair_generator(halides, acids),
+        generator=generator,
     )
+
     context_dict = {
         "halides": halides,
         "acids": acids,
         "element_features": element_features,
         "train_stats": train_stats,
         "model_weights": model_weights,
+        "out_dir": out_dir,
+        "input_dir": input_dir,
+        "package": package,
+        "t_nn": t_nn,
+        "t_ste": t_ste,
+        "t_ed": t_ed,
     }
+
     for key, value in context_dict.items():
         pipeline_executor.set_context(key, value)
     return pipeline_executor
@@ -58,13 +169,33 @@ def get_pipeline(
 
 if __name__ == "__main__":
     ap = cli.get_argparser(description=__doc__)
-    ap.add_argument("--halides", required=True, help="CSV file containing halides data")
-    ap.add_argument("--acids", required=True, help="CSV file containing boronic acids data")
+    ap.add_argument("--halides", required=False, help="CSV file containing halides data")
+    ap.add_argument("--acids", required=False, help="CSV file containing boronic acids data")
     ap.add_argument("--features", required=True, help="Element feature file")
     ap.add_argument("--train", required=True, help="Train stats file")
     ap.add_argument("--weights", required=True, help="Full energy model weights")
+    ap.add_argument("--out_dir", required=False, help="Directory for output parquet files")
+    ap.add_argument("--input_dir", required=False, help="Directory containing input parquet files")
+    ap.add_argument("--threshold_file", required=False, help="JSON file containing t_nn, t_ste, and t_ed threshold")
+    ap.add_argument(
+        "--package", required=False, default="orca", choices=["orca", "ase"], help="DFT package to use (default: orca)"
+    )
     args = ap.parse_args()
 
+    # Initialize thresholds
+    t_nn, t_ste, t_ed = None, None, None
+
+    # Load thresholds from the provided JSON file if available
+    if args.threshold_file:
+        with open(args.threshold_file, "r") as f:
+            config = json.load(f)
+
+            thresholds = config["thresholds"]
+            t_nn = thresholds["t_nn"]
+            t_ste = thresholds["t_ste"]
+            t_ed = thresholds["t_ed"]
+
+    # Run the pipeline with the provided arguments
     cli.cli_run(
         get_pipeline(
             args.halides,
@@ -72,6 +203,12 @@ if __name__ == "__main__":
             args.features,
             args.train,
             args.weights,
+            args.out_dir,
+            args.input_dir,
+            args.package,
+            t_nn,
+            t_ste,
+            t_ed,
         ),
         args,
     )

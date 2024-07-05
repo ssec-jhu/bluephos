@@ -19,7 +19,7 @@ def setup_dataframe():
   1  3  1  0  0  0  0
 M  END
     """
-    data = {"ligand_identifier": "H11A1L0", "structure": [mol_block]}
+    data = {"ligand_identifier": "H11A1L0", "structure": [mol_block], "z": 1.137221, "ste": None}
     df = pd.DataFrame(data)
     return df
 
@@ -31,8 +31,11 @@ def test_optimize(mock_optimize_geometry, mock_octahedral_embed, setup_dataframe
     mock_octahedral_embed.return_value = None  # Does not need to return anything
     mock_optimize_geometry.return_value = None  # Does not need to return anything
 
+    # Define a mock t_nn argument
+    mock_t_nn = 1.5  # Replace with a suitable value for t_nn
+
     # Run optimize
-    output_dataframe = optimize_geometries(setup_dataframe)
+    output_dataframe = optimize_geometries(setup_dataframe, mock_t_nn)
 
     # Check if XYZ data was added or set to failed
     assert output_dataframe.loc[0, "xyz"] is not None

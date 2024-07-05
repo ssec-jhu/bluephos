@@ -1,10 +1,16 @@
 from functools import reduce
 
 import pandas as pd
+import logging
+import bluephos.modules.log_config as log_config
 from dplutils.pipeline import PipelineTask
 from rdkit import Chem
 from rdkit.Chem import AddHs, AllChem, MolFromSmiles
 from rdkit.Chem.rdmolops import CombineMols, Kekulize, SanitizeMol
+
+
+# Get a logger instance
+logger = logging.getLogger(__name__)
 
 
 def ligate(ligands, metal_atom_element="Ir", metal_atom=None):
@@ -43,7 +49,6 @@ def ligate(ligands, metal_atom_element="Ir", metal_atom=None):
 def smiles_to_sdf(df: pd.DataFrame) -> pd.DataFrame:
     """Convert SMILES strings to SDF format and Add to Input dataframe"""
 
-    df["structure"] = None
     for index, row in df.iterrows():
         ligand = MolFromSmiles(row["ligand_SMILES"])
         if ligand is not None:
@@ -55,7 +60,9 @@ def smiles_to_sdf(df: pd.DataFrame) -> pd.DataFrame:
                 mol_block = Chem.MolToMolBlock(mol)
                 df.at[index, "structure"] = mol_block
             else:
-                print(f"Ligation failed for index {index}, identifier {row['ligand_identifier']}.")
+                logger.warning(f"Ligation failed for index {index}, identifier {row['ligand_identifier']}.")
+        else:
+            logger.warning(f"Invalid SMILES string for index {index}, identifier {row['ligand_identifier']}.")
     return df
 
 
