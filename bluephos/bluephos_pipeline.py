@@ -10,7 +10,7 @@ from bluephos.tasks.generateligandtable import GenerateLigandTableTask
 from bluephos.tasks.nn import NNTask
 from bluephos.tasks.optimizegeometries import OptimizeGeometriesTask
 from bluephos.tasks.smiles2sdf import Smiles2SDFTask
-from bluephos.tasks.dft_orca import DFTTask
+from bluephos.tasks.dft import DFTTask
 
 
 def initialize_dataframe():

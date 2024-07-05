@@ -2,7 +2,7 @@ import os
 import pytest
 import pandas as pd
 from unittest.mock import patch
-from bluephos.tasks.dft_orca import dft_run, remove_second_row, OrcaCalculator
+from bluephos.tasks.dft import dft_run, remove_second_row, OrcaCalculator
 
 
 @pytest.fixture
@@ -39,7 +39,7 @@ Total Energy       :     -4074.79546374 Eh        -273431.343322 eV"""
     (output_dir / base_filename).write_text(base_content)
 
 
-@patch("bluephos.tasks.dft_orca.OrcaCalculator.extract_results")
+@patch("bluephos.tasks.dft.OrcaCalculator.extract_results")
 @patch("tempfile.mkdtemp")
 def test_dft_run(mock_mkdtemp, mock_extract_results, setup_dataframe, tmp_path):
     # Setup mock to simulate ORCA command output
@@ -59,7 +59,7 @@ def test_dft_run(mock_mkdtemp, mock_extract_results, setup_dataframe, tmp_path):
     assert df.loc[0, "energy diff"] == pytest.approx(-273432.343322 + 273431.343322)
 
 
-@patch("bluephos.tasks.dft_orca.OrcaCalculator.extract_results")
+@patch("bluephos.tasks.dft.OrcaCalculator.extract_results")
 def test_extraction_from_real_output(mock_extract_results, tmp_path):
     ligand_identifier = "H11A1L9"
     create_test_data(tmp_path, ligand_identifier)
