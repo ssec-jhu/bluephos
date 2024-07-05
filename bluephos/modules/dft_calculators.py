@@ -9,7 +9,61 @@ from bluephos.modules.dft_extract import extract
 MAX_DEFAULT_CPUS = 48  # Maximum default CPUs to use if not specified by environment
 
 
+class DFTCalculator:
+    """
+    Base class for DFT Calculators.
+    """
+
+    def __init__(self, n_cpus):
+        self.n_cpus = n_cpus
+
+    def prepare_input_files(self, temp_dir, xyz_value):
+        raise NotImplementedError
+
+    def run_calculation(self, temp_dir, base_name):
+        raise NotImplementedError
+
+    def extract_results(self, temp_dir, base_name):
+        raise NotImplementedError
+
+
+class OrcaCalculator(DFTCalculator):
+    """
+    ORCA implementation of the DFTCalculator
+    """
+
+    def __init__(self, n_cpus, orca_path):
+        super().__init__(n_cpus)
+        self.orca_path = orca_path
+
+    def prepare_input_files(self, temp_dir, xyz_value):
+        return create_orca_input_files(temp_dir, xyz_value)
+
+    def run_calculation(self, temp_dir, base_name, xyz_value):
+        relax_input, triplet_input, base_input = self.prepare_input_files(temp_dir, xyz_value)
+        relax_output = os.path.join(temp_dir, f"{base_name}_relax_output.txt")
+        triplet_output = os.path.join(temp_dir, f"{base_name}_triplet_output.txt")
+        base_output = os.path.join(temp_dir, f"{base_name}_base_output.txt")
+
+        try:
+            run_orca_command(relax_input, relax_output, self.orca_path)
+            run_orca_command(triplet_input, triplet_output, self.orca_path)
+            run_orca_command(base_input, base_output, self.orca_path)
+        except subprocess.CalledProcessError as e:
+            logging.error(f"DFT calculation failed for {base_name}: {e}")
+            raise
+
+        return triplet_output, base_output
+
+    def extract_results(self, temp_dir, base_name, xyz_value):
+        triplet_output, base_output = self.run_calculation(temp_dir, base_name, xyz_value)
+        return extract(triplet_output, base_output)
+
+
 def create_orca_input_files(temp_dir, xyz_value):
+    """
+    Create ORCA input files for different calculation types.
+    """
     n_cpu_custom = min(multiprocessing.cpu_count(), MAX_DEFAULT_CPUS)
     n_cpus = os.getenv("OMP_NUM_THREADS", str(n_cpu_custom))
     logging.info(f"Using {n_cpus} CPUs for computation")
@@ -56,6 +110,9 @@ def create_orca_input_files(temp_dir, xyz_value):
 
 
 def run_orca_command(input_file, output_file, orca_path):
+    """
+    Run the ORCA command and log outputs.
+    """
     command = [orca_path, input_file]
     with open(output_file, "w") as output:
         result = subprocess.run(command, stdout=output, stderr=subprocess.PIPE, check=True, text=True)
@@ -68,6 +125,8 @@ def run_orca_command(input_file, output_file, orca_path):
 
 
 def remove_second_row(xyz):
+    """Remove the second row of an XYZ string and add an asterisk at the end"""
+
     lines = xyz.split("\n")
     if len(lines) > 1:
         lines.pop(1)
@@ -75,51 +134,13 @@ def remove_second_row(xyz):
     return "\n".join(lines)
 
 
-class DFTCalculator:
-    def __init__(self, n_cpus):
-        self.n_cpus = n_cpus
-
-    def prepare_input_files(self, temp_dir, xyz_value):
-        raise NotImplementedError
-
-    def run_calculation(self, temp_dir, base_name):
-        raise NotImplementedError
-
-    def extract_results(self, temp_dir, base_name):
-        raise NotImplementedError
-
-
-class OrcaCalculator(DFTCalculator):
-    def __init__(self, n_cpus, orca_path):
-        super().__init__(n_cpus)
-        self.orca_path = orca_path
-
-    def prepare_input_files(self, temp_dir, xyz_value):
-        return create_orca_input_files(temp_dir, xyz_value)
-
-    def run_calculation(self, temp_dir, base_name, xyz_value):
-        relax_input, triplet_input, base_input = self.prepare_input_files(temp_dir, xyz_value)
-        relax_output = os.path.join(temp_dir, f"{base_name}_relax_output.txt")
-        triplet_output = os.path.join(temp_dir, f"{base_name}_triplet_output.txt")
-        base_output = os.path.join(temp_dir, f"{base_name}_base_output.txt")
-
-        try:
-            run_orca_command(relax_input, relax_output, self.orca_path)
-            run_orca_command(triplet_input, triplet_output, self.orca_path)
-            run_orca_command(base_input, base_output, self.orca_path)
-        except subprocess.CalledProcessError as e:
-            logging.error(f"DFT calculation failed for {base_name}: {e}")
-            raise
-
-        return triplet_output, base_output
-
-    def extract_results(self, temp_dir, base_name, xyz_value):
-        triplet_output, base_output = self.run_calculation(temp_dir, base_name, xyz_value)
-        return extract(triplet_output, base_output)
-
-
-# Here add optional ASE calculator
+# Placeholder for future implementation of ASECalculator
 class ASECalculator(DFTCalculator):
+    """
+    ASE implementation of the DFTCalculator.
+    (To be implemented later)
+    """
+
     def __init__(self, n_cpus):
         super().__init__(n_cpus)
 
