@@ -20,9 +20,6 @@ except ImportError:
     logger.warning("xtb not installed. Limited functionality available.")
 
 
-
-
-
 def calculate_ste(mol):
     try:
         calc = XTB(method="GFN2-xTB")
