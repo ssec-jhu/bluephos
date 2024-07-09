@@ -1,7 +1,6 @@
 __doc__ = """"BluePhos Discovery Pipeline"""
 
 import pandas as pd
-import os
 import json
 from dplutils import cli
 from dplutils.pipeline.ray import RayStreamGraphExecutor
@@ -81,11 +80,12 @@ def rerun_candidate_generator(input_dir, t_nn, t_ste, t_ed):
     """
     for file in Path(input_dir).glob("*.parquet"):
         df = pd.read_parquet(file)
-        
+
         filtered = df[
-            (df["z"].notnull()) & (df["z"].abs() < t_nn) & 
-            ((df["ste"].isnull()) | (df["ste"].abs() < t_ste)) & 
-            (df["dft_energy_diff"].isna())
+            (df["z"].notnull())
+            & (df["z"].abs() < t_nn)
+            & ((df["ste"].isnull()) | (df["ste"].abs() < t_ste))
+            & (df["dft_energy_diff"].isna())
         ]
         for _, row in filtered.iterrows():
             yield row.to_frame().transpose()
@@ -156,7 +156,11 @@ if __name__ == "__main__":
     ap.add_argument("--input_dir", required=False, help="Directory containing input parquet files")
     ap.add_argument("--threshold_file", required=False, help="JSON file containing t_nn, t_ste, and t_ed threshold")
     ap.add_argument(
-        "--dft_package", required=False, default="orca", choices=["orca", "ase"], help="DFT package to use (default: orca)"
+        "--dft_package",
+        required=False,
+        default="orca",
+        choices=["orca", "ase"],
+        help="DFT package to use (default: orca)",
     )
     args = ap.parse_args()
 

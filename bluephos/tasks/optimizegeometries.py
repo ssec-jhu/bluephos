@@ -109,5 +109,5 @@ OptimizeGeometriesTask = PipelineTask(
         "t_nn": "t_nn",
     },
     batch_size=4,
-    num_cpus=64
+    num_cpus=64,
 )

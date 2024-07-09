@@ -13,6 +13,7 @@ from bluephos.modules.sdf2feature import feature_create
 # Setup logging and get a logger instance
 logger = log_config.setup_logging(__name__)
 
+
 class Net(t.nn.Module):
     def __init__(self, num_features, dim, dropout, n_targets):
         super(Net, self).__init__()
