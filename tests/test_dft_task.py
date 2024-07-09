@@ -18,7 +18,7 @@ H 0.0000 0.0000 0.9500
 O -0.9266 0.0000 -0.3333"""
         ],
         "ste": [0.05],
-        "energy diff": [None],
+        "dft_energy_diff": [None],
     }
     df = pd.DataFrame(data)
     return df
@@ -51,12 +51,12 @@ def test_dft_run(mock_mkdtemp, mock_extract_results, setup_dataframe, tmp_path):
     os.environ["EBROOTORCA"] = "/mock/path/to/orca"
 
     # Run dft_run
-    df = dft_run(setup_dataframe, t_ste=0.1, package="orca")
+    df = dft_run(setup_dataframe, t_ste=0.1, dft_package="orca")
 
     # Assertions to check file usage, existence, and DataFrame updates
-    assert "energy diff" in df.columns
-    assert isinstance(df.loc[0, "energy diff"], float)
-    assert df.loc[0, "energy diff"] == pytest.approx(-273432.343322 + 273431.343322)
+    assert "dft_energy_diff" in df.columns
+    assert isinstance(df.loc[0, "dft_energy_diff"], float)
+    assert df.loc[0, "dft_energy_diff"] == pytest.approx(-273432.343322 + 273431.343322)
 
 
 @patch("bluephos.tasks.dft.OrcaCalculator.extract_results")
