@@ -108,5 +108,6 @@ OptimizeGeometriesTask = PipelineTask(
     context_kwargs={
         "t_nn": "t_nn",
     },
-    batch_size=10,
+    batch_size=4,
+    num_cpus=64
 )

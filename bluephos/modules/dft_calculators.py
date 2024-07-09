@@ -116,8 +116,6 @@ def run_orca_command(input_file, output_file, orca_path):
     command = [orca_path, input_file]
     with open(output_file, "w") as output:
         result = subprocess.run(command, stdout=output, stderr=subprocess.PIPE, check=True, text=True)
-        # logging.info(f"ORCA command output: {result.stdout}")
-        # logging.error(f"ORCA command error output: {result.stderr}")
         if result.stderr:  # Check if stderr is not empty
             logging.error(f"ORCA command error output: {result.stderr}")
         else:

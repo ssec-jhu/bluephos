@@ -5,7 +5,7 @@ import os
 import json
 from dplutils import cli
 from dplutils.pipeline.ray import RayStreamGraphExecutor
-
+from pathlib import Path
 from bluephos.tasks.generateligandtable import GenerateLigandTableTask
 from bluephos.tasks.nn import NNTask
 from bluephos.tasks.optimizegeometries import OptimizeGeometriesTask
@@ -26,7 +26,7 @@ def initialize_dataframe():
         "z",
         "xyz",
         "ste",
-        "energy diff",
+        "dft_energy_diff",
     ]
     return pd.DataFrame(columns=columns)
 
@@ -63,33 +63,32 @@ def rerun_candidate_generator(input_dir, t_nn, t_ste, t_ed):
     Core Algorithm:
     - If the absolute value of 'z' is less than t_nn,
     - and 'ste' is None or its absolute value is less than t_ste,
-    - and 'energy diff' is None,
+    - and 'dft_energy_diff' is None,
     This row is then added to a new DataFrame and yielded for re-run.
 
     Additional Context:
     1. All valid ligand pairs should already have run through the NN process and have a 'z' score.
-    2. If a row's 'ste' is None, then it's 'energy diff' should also be None.
+    2. If a row's 'ste' is None, then it's 'dft_energy_diff' should also be None.
 
     Args:
         input_dir (str): Directory containing input parquet files.
         t_nn (float): Threshold for 'z' score.
         t_ste (float): Threshold for 'ste'.
-        t_ed (float): Threshold for 'energy diff'.
+        t_ed (float): Threshold for 'dft_energy_diff'.
 
     Yields:
         DataFrame: A single-row DataFrame containing candidate data.
     """
-    for file in os.listdir(input_dir):
-        if file.endswith(".parquet"):
-            df = pd.read_parquet(os.path.join(input_dir, file))
-            for _, row in df.iterrows():
-                if row["z"] is not None and abs(row["z"]) < t_nn:
-                    if row["ste"] is None or abs(row["ste"]) < t_ste:
-                        if row["energy diff"] is None:
-                            candidate_row_df = initialize_dataframe()
-                            for col in row.index:
-                                candidate_row_df.at[0, col] = row[col]
-                            yield candidate_row_df
+    for file in Path(input_dir).glob("*.parquet"):
+        df = pd.read_parquet(file)
+        
+        filtered = df[
+            (df["z"].notnull()) & (df["z"].abs() < t_nn) & 
+            ((df["ste"].isnull()) | (df["ste"].abs() < t_ste)) & 
+            (df["dft_energy_diff"].isna())
+        ]
+        for _, row in filtered.iterrows():
+            yield row.to_frame().transpose()
 
 
 def get_generator(halides, acids, input_dir, t_nn, t_ste, t_ed):
@@ -105,12 +104,11 @@ def get_pipeline(
     element_features,  # Path to the element features file
     train_stats,  # Path to the train stats file
     model_weights,  # Path to the model weights file
-    out_dir=None,  # Output directory for results
     input_dir=None,  # Directory containing input parquet files(rerun). Defaults to None.
-    package="orca",  # DFT package to use. Defaults to "orca".
+    dft_package="orca",  # DFT package to use. Defaults to "orca".
     t_nn=None,  # Threshold for 'z' score. Defaults to None
     t_ste=None,  # Threshold for 'ste'. Defaults to None
-    t_ed=None,  # Threshold for 'energy diff'. Defaults to None
+    t_ed=None,  # Threshold for 'dft_energy_diff'. Defaults to None
 ):
     steps = (
         [
@@ -122,6 +120,7 @@ def get_pipeline(
         ]
         if not input_dir
         else [
+            NNTask,
             OptimizeGeometriesTask,
             DFTTask,
         ]
@@ -135,9 +134,7 @@ def get_pipeline(
         "element_features": element_features,
         "train_stats": train_stats,
         "model_weights": model_weights,
-        "out_dir": out_dir,
-        "input_dir": input_dir,
-        "package": package,
+        "dft_package": dft_package,
         "t_nn": t_nn,
         "t_ste": t_ste,
         "t_ed": t_ed,
@@ -159,7 +156,7 @@ if __name__ == "__main__":
     ap.add_argument("--input_dir", required=False, help="Directory containing input parquet files")
     ap.add_argument("--threshold_file", required=False, help="JSON file containing t_nn, t_ste, and t_ed threshold")
     ap.add_argument(
-        "--package", required=False, default="orca", choices=["orca", "ase"], help="DFT package to use (default: orca)"
+        "--dft_package", required=False, default="orca", choices=["orca", "ase"], help="DFT package to use (default: orca)"
     )
     args = ap.parse_args()
 
@@ -184,9 +181,8 @@ if __name__ == "__main__":
             args.features,
             args.train,
             args.weights,
-            args.out_dir,
             args.input_dir,
-            args.package,
+            args.dft_package,
             t_nn,
             t_ste,
             t_ed,

@@ -16,12 +16,12 @@ DEBUG = True
 MAX_DEFAULT_CPUS = 48  # Maximum default CPUs to use if not specified by environment
 
 
-def get_dft_calculator(package, n_cpus):
+def get_dft_calculator(dft_package, n_cpus):
     """
     Get the appropriate DFT calculator based on the specified package.
 
     Args:
-        package (str): The name of the DFT package to use ('orca' or 'ase').
+        dft_package (str): The name of the DFT package to use ('orca' or 'ase').
         n_cpus (int): Number of CPUs to use for the calculations.
 
     Returns:
@@ -31,10 +31,10 @@ def get_dft_calculator(package, n_cpus):
         ValueError: If an unsupported DFT package is specified.
     """
 
-    if package == "orca":
+    if dft_package == "orca":
         orca_path = os.path.join(os.getenv("EBROOTORCA"), "orca")
         return OrcaCalculator(n_cpus, orca_path)
-    elif package == "ase":
+    elif dft_package == "ase":
         return ASECalculator(n_cpus)
     else:
         raise ValueError("Unsupported DFT package")
@@ -44,7 +44,7 @@ def get_dft_calculator(package, n_cpus):
 def process_dataframe(row, t_ste, dft_calculator):
     mol_id = row["ligand_identifier"]
     ste = row["ste"]
-    energy_diff = row["energy diff"]
+    energy_diff = row["dft_energy_diff"]
 
     if ste is None or abs(ste) >= t_ste or energy_diff is not None:
         logger.info(f"Skipping DFT on molecule {mol_id} based on z or t_ste conditions.")
@@ -65,7 +65,7 @@ def process_dataframe(row, t_ste, dft_calculator):
         xyz_value = remove_second_row(row["xyz"])
         logger.info(f"Starting DFT calculation for {base_name}...")
         energy_diff = dft_calculator.extract_results(temp_dir, base_name, xyz_value)
-        row["energy diff"] = energy_diff
+        row["dft_energy_diff"] = energy_diff
         return row
     finally:
         if DEBUG:
@@ -76,11 +76,11 @@ def process_dataframe(row, t_ste, dft_calculator):
 
 
 # Run DFT calculations on the DataFrame
-def dft_run(df: pd.DataFrame, t_ste: float, package: str) -> pd.DataFrame:
+def dft_run(df: pd.DataFrame, t_ste: float, dft_package: str) -> pd.DataFrame:
     n_cpu_custom = min(multiprocessing.cpu_count(), MAX_DEFAULT_CPUS)
     n_cpus = int(os.getenv("OMP_NUM_THREADS", str(n_cpu_custom)))
 
-    dft_calculator = get_dft_calculator(package, n_cpus)
+    dft_calculator = get_dft_calculator(dft_package, n_cpus)
 
     df = df.apply(process_dataframe, axis=1, t_ste=t_ste, dft_calculator=dft_calculator)
     return df
@@ -92,8 +92,8 @@ DFTTask = PipelineTask(
     dft_run,
     context_kwargs={
         "t_ste": "t_ste",
-        "package": "package",  #  Either "ase" or "orca"
+        "dft_package": "dft_package",  #  Either "ase" or "orca"
     },
     batch_size=1,
-    num_cpus=64,
+    num_cpus=40,
 )
