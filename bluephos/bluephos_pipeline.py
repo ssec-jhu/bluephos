@@ -105,9 +105,9 @@ def get_pipeline(
     model_weights,  # Path to the model weights file
     input_dir=None,  # Directory containing input parquet files(rerun). Defaults to None.
     dft_package="orca",  # DFT package to use. Defaults to "orca".
-    t_nn=None,  # Threshold for 'z' score. Defaults to None
-    t_ste=None,  # Threshold for 'ste'. Defaults to None
-    t_ed=None,  # Threshold for 'dft_energy_diff'. Defaults to None
+    t_nn=1.5,  # Threshold for 'z' score. Defaults to None
+    t_ste=1.9,  # Threshold for 'ste'. Defaults to None
+    t_ed=0.3,  # Threshold for 'dft_energy_diff'. Defaults to None
 ):
     steps = (
         [
@@ -153,6 +153,11 @@ if __name__ == "__main__":
     ap.add_argument("--weights", required=True, help="Full energy model weights")
     ap.add_argument("--input_dir", required=False, help="Directory containing input parquet files")
     ap.add_argument("--threshold_file", required=False, help="JSON file containing t_nn, t_ste, and t_ed threshold")
+    ap.add_argument("--t_nn", type=float, required=False, default=1.5, help="Threshold for 'z' score (default: 1.5)")
+    ap.add_argument("--t_ste", type=float, required=False, default=1.9, help="Threshold for 'ste' (default: 1.9)")
+    ap.add_argument(
+        "--t_ed", type=float, required=False, default=0.3, help="Threshold for 'dft_energy_diff' (default: 0.3)"
+    )
     ap.add_argument(
         "--dft_package",
         required=False,
@@ -161,19 +166,6 @@ if __name__ == "__main__":
         help="DFT package to use (default: orca)",
     )
     args = ap.parse_args()
-
-    # Initialize thresholds
-    t_nn, t_ste, t_ed = None, None, None
-
-    # Load thresholds from the provided JSON file if available
-    if args.threshold_file:
-        with open(args.threshold_file, "r") as f:
-            config = json.load(f)
-
-            thresholds = config["thresholds"]
-            t_nn = thresholds["t_nn"]
-            t_ste = thresholds["t_ste"]
-            t_ed = thresholds["t_ed"]
 
     # Run the pipeline with the provided arguments
     cli.cli_run(
@@ -185,9 +177,9 @@ if __name__ == "__main__":
             args.weights,
             args.input_dir,
             args.dft_package,
-            t_nn,
-            t_ste,
-            t_ed,
+            args.t_nn,
+            args.t_ste,
+            args.t_ed,
         ),
         args,
     )

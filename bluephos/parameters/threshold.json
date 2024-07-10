@@ -1,9 +1,0 @@
-{
-    "_comment": "Threshold parameters for the BluePhos Discovery Pipeline",
-    "thresholds": {"t_nn": 1.5, "t_ste": 1.5, "t_ed": 0.3},
-    "_descriptions": {
-        "t_nn": "Threshold for the neural network (NN) score. Determines the maximum allowed absolute value for the NN score to consider a candidate.",
-        "t_ste": "Threshold for the ste value. Determines the maximum allowed absolute value for the ste value to consider a candidate.",
-        "t_ed": "Threshold for the energy difference (ed). Determines the maximum allowed value for the energy difference to consider a candidate."
-    }
-}
