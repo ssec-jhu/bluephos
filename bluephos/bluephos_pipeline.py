@@ -45,14 +45,13 @@ def ligand_pair_generator(halides_file, acids_file):
     acids_df = pd.read_csv(acids_file)
     for _, halide in halides_df.iterrows():
         for _, acid in acids_df.iterrows():
-            ligand_pair_df = initialize_dataframe()
-
-            ligand_pair_df.at[0, "halide_identifier"] = halide["halide_identifier"]
-            ligand_pair_df.at[0, "halide_SMILES"] = halide["halide_SMILES"]
-            ligand_pair_df.at[0, "acid_identifier"] = acid["acid_identifier"]
-            ligand_pair_df.at[0, "acid_SMILES"] = acid["acid_SMILES"]
-
-            yield ligand_pair_df
+            ligand_pair = {
+                "halide_identifier": halide["halide_identifier"],
+                "halide_SMILES": halide["halide_SMILES"],
+                "acid_identifier": acid["acid_identifier"],
+                "acid_SMILES": acid["acid_SMILES"],
+            }
+            yield (pd.DataFrame([ligand_pair]))
 
 
 def rerun_candidate_generator(input_dir, t_nn, t_ste, t_ed):
@@ -152,7 +151,6 @@ if __name__ == "__main__":
     ap.add_argument("--features", required=True, help="Element feature file")
     ap.add_argument("--train", required=True, help="Train stats file")
     ap.add_argument("--weights", required=True, help="Full energy model weights")
-    ap.add_argument("--out_dir", required=False, help="Directory for output parquet files")
     ap.add_argument("--input_dir", required=False, help="Directory containing input parquet files")
     ap.add_argument("--threshold_file", required=False, help="JSON file containing t_nn, t_ste, and t_ed threshold")
     ap.add_argument(
