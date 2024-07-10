@@ -11,24 +11,6 @@ from bluephos.tasks.smiles2sdf import Smiles2SDFTask
 from bluephos.tasks.dft import DFTTask
 
 
-def initialize_dataframe():
-    """Initialize a DataFrame with the required columns."""
-    columns = [
-        "ligand_identifier",
-        "ligand_SMILES",
-        "halide_identifier",
-        "halide_SMILES",
-        "acid_identifier",
-        "acid_SMILES",
-        "structure",
-        "z",
-        "xyz",
-        "ste",
-        "dft_energy_diff",
-    ]
-    return pd.DataFrame(columns=columns)
-
-
 def ligand_pair_generator(halides_file, acids_file):
     """
     Generate ligand pairs from halides and acids files.
@@ -71,7 +53,6 @@ def rerun_candidate_generator(input_dir, t_nn, t_ste):
         input_dir (str): Directory containing input parquet files.
         t_nn (float): Threshold for 'z' score.
         t_ste (float): Threshold for 'ste'.
-        t_ed (float): Threshold for 'dft_energy_diff'.
 
     Yields:
         DataFrame: A single-row DataFrame containing candidate data.
@@ -108,7 +89,6 @@ def get_pipeline(
     dft_package="orca",  # DFT package to use. Defaults to "orca".
     t_nn=1.5,  # Threshold for 'z' score. Defaults to None
     t_ste=1.9,  # Threshold for 'ste'. Defaults to None
-    t_ed=0.3,  # Threshold for 'dft_energy_diff'. Defaults to None
 ):
     """
     Set up and return the BluePhos discovery pipeline executor
@@ -142,7 +122,6 @@ def get_pipeline(
         "dft_package": dft_package,
         "t_nn": t_nn,
         "t_ste": t_ste,
-        "t_ed": t_ed,
     }
 
     for key, value in context_dict.items():
@@ -160,9 +139,7 @@ if __name__ == "__main__":
     ap.add_argument("--input_dir", required=False, help="Directory containing input parquet files")
     ap.add_argument("--t_nn", type=float, required=False, default=1.5, help="Threshold for 'z' score (default: 1.5)")
     ap.add_argument("--t_ste", type=float, required=False, default=1.9, help="Threshold for 'ste' (default: 1.9)")
-    ap.add_argument(
-        "--t_ed", type=float, required=False, default=0.3, help="Threshold for 'dft_energy_diff'(default: 0.3)"
-    )
+
     ap.add_argument(
         "--dft_package",
         required=False,
@@ -184,7 +161,6 @@ if __name__ == "__main__":
             args.dft_package,
             args.t_nn,
             args.t_ste,
-            args.t_ed,
         ),
         args,
     )
