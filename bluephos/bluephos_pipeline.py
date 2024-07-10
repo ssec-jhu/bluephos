@@ -1,10 +1,9 @@
 __doc__ = """"BluePhos Discovery Pipeline"""
 
+from pathlib import Path
 import pandas as pd
-import json
 from dplutils import cli
 from dplutils.pipeline.ray import RayStreamGraphExecutor
-from pathlib import Path
 from bluephos.tasks.generateligandtable import GenerateLigandTableTask
 from bluephos.tasks.nn import NNTask
 from bluephos.tasks.optimizegeometries import OptimizeGeometriesTask
@@ -51,10 +50,10 @@ def ligand_pair_generator(halides_file, acids_file):
                 "acid_identifier": acid["acid_identifier"],
                 "acid_SMILES": acid["acid_SMILES"],
             }
-            yield (pd.DataFrame([ligand_pair]))
+            yield pd.DataFrame([ligand_pair])
 
 
-def rerun_candidate_generator(input_dir, t_nn, t_ste, t_ed):
+def rerun_candidate_generator(input_dir, t_nn, t_ste):
     """
     Generates candidate DataFrames from parquet files in the input directory.
 
@@ -90,11 +89,13 @@ def rerun_candidate_generator(input_dir, t_nn, t_ste, t_ed):
             yield row.to_frame().transpose()
 
 
-def get_generator(halides, acids, input_dir, t_nn, t_ste, t_ed):
+def get_generator(halides, acids, input_dir, t_nn, t_ste):
+    """
+    Get the appropriate generator based on the input directory presence.
+    """
     if not input_dir:
         return lambda: ligand_pair_generator(halides, acids)
-    else:
-        return lambda: rerun_candidate_generator(input_dir, t_nn, t_ste, t_ed)
+    return lambda: rerun_candidate_generator(input_dir, t_nn, t_ste)
 
 
 def get_pipeline(
@@ -109,6 +110,11 @@ def get_pipeline(
     t_ste=1.9,  # Threshold for 'ste'. Defaults to None
     t_ed=0.3,  # Threshold for 'dft_energy_diff'. Defaults to None
 ):
+    """
+    Set up and return the BluePhos discovery pipeline executor
+    Returns:
+        RayStreamGraphExecutor: An executor for the BluePhos discovery pipeline
+    """
     steps = (
         [
             GenerateLigandTableTask,
@@ -124,7 +130,7 @@ def get_pipeline(
             DFTTask,
         ]
     )
-    generator = get_generator(halides, acids, input_dir, t_nn, t_ste, t_ed)
+    generator = get_generator(halides, acids, input_dir, t_nn, t_ste)
     pipeline_executor = RayStreamGraphExecutor(graph=steps, generator=generator)
 
     context_dict = {
@@ -152,11 +158,10 @@ if __name__ == "__main__":
     ap.add_argument("--train", required=True, help="Train stats file")
     ap.add_argument("--weights", required=True, help="Full energy model weights")
     ap.add_argument("--input_dir", required=False, help="Directory containing input parquet files")
-    ap.add_argument("--threshold_file", required=False, help="JSON file containing t_nn, t_ste, and t_ed threshold")
     ap.add_argument("--t_nn", type=float, required=False, default=1.5, help="Threshold for 'z' score (default: 1.5)")
     ap.add_argument("--t_ste", type=float, required=False, default=1.9, help="Threshold for 'ste' (default: 1.9)")
     ap.add_argument(
-        "--t_ed", type=float, required=False, default=0.3, help="Threshold for 'dft_energy_diff' (default: 0.3)"
+        "--t_ed", type=float, required=False, default=0.3, help="Threshold for 'dft_energy_diff'(default: 0.3)"
     )
     ap.add_argument(
         "--dft_package",
