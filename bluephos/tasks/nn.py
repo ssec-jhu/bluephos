@@ -1,6 +1,7 @@
 import pandas as pd
 import torch as t
 import torch.nn.functional as F
+import bluephos.modules.log_config as log_config
 from dplutils.pipeline import PipelineTask
 from torch.nn import Dropout, Linear
 from torch.nn.init import kaiming_normal_
@@ -8,6 +9,9 @@ from torch_geometric.loader import DataLoader
 from torch_geometric.nn import GCN, Set2Set
 
 from bluephos.modules.sdf2feature import feature_create
+
+# Setup logging and get a logger instance
+logger = log_config.setup_logging(__name__)
 
 
 class Net(t.nn.Module):
@@ -93,6 +97,7 @@ def apply_nn(feature_df: pd.DataFrame, model_weights) -> pd.DataFrame:
             results = model(batch)
             out_data = pd.DataFrame(results.detach().numpy(), columns=["z"])
             out_data["mol_id"] = batch.mol_id
+            logger.info(f"Processed molecule ID: {batch.mol_id}")
             dataframes.append(out_data)
 
     # Saving the predictions
@@ -102,13 +107,13 @@ def apply_nn(feature_df: pd.DataFrame, model_weights) -> pd.DataFrame:
 
 
 def nn(df: pd.DataFrame, element_features, train_stats, model_weights) -> pd.DataFrame:
-    df_structure = df[["structure"]].dropna()
+    df_structure = df[["ligand_identifier", "structure"]].dropna(subset=["structure"])
     feature_df = feature_create(df_structure, element_features, train_stats)
     nn_score_df = apply_nn(feature_df, model_weights)
 
     score_mapping = nn_score_df.set_index("mol_id")["z"]
     df["z"] = df["ligand_identifier"].map(score_mapping)
-
+    logger.info("NN task complete")
     return df
 
 

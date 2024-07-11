@@ -1,6 +1,10 @@
 import pandas as pd
+import bluephos.modules.log_config as log_config
 from dplutils.pipeline import PipelineTask
 from rdkit.Chem import AllChem, MolFromSmiles, MolToSmiles
+
+# Setup logging and get a logger instance
+logger = log_config.setup_logging(__name__)
 
 
 def suzuki_couple(boronic_acid_smiles, halide_smiles):
@@ -65,9 +69,15 @@ def generate_ligand_table(
                     "halide_SMILES": ligand_pair["halide_SMILES"],
                     "acid_identifier": ligand_pair["acid_identifier"],
                     "acid_SMILES": ligand_pair["acid_SMILES"],
+                    "structure": None,
+                    "z": None,
+                    "xyz": None,
+                    "ste": None,
+                    "dft_energy_diff": None,
                 }
             )
 
+    logger.info("Ligand Generate Task complete")
     # Create the DataFrame using the list of data
     return pd.DataFrame(result_data)
 

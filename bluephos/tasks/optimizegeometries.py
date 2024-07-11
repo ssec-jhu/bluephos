@@ -1,46 +1,56 @@
-import logging
+import bluephos.modules.log_config as log_config
 from time import sleep
-
 import pandas as pd
 from ase.calculators.calculator import InputError
 from dplutils.pipeline import PipelineTask
 from rdkit import Chem
 from rdkit.Chem import AddHs, MolToXYZBlock
-
-from bluephos.modules.annotate_rdkit_with_ase import optimize_geometry
+from bluephos.modules.annotate_rdkit_with_ase import optimize_geometry, annotate_molecule_property
 from bluephos.modules.bond_length import bonds_maintained
 from bluephos.modules.isoctahedral import isoctahedral
 from bluephos.modules.octahedral_embed import octahedral_embed
+
+# Setup logging and get a logger instance
+logger = log_config.setup_logging(__name__)
 
 try:
     from xtb.ase.calculator import XTB
 except ImportError:
     XTB = None
-    logging.warning("xtb not installed. Limited functionality available.")
+    logger.warning("xtb not installed. Limited functionality available.")
 
 
-logger = logging.getLogger(__name__)
+def calculate_ste(mol):
+    try:
+        calc = XTB(method="GFN2-xTB")
+        annotate_molecule_property(mol, "singlet_energy", calc, lambda x: x.get_potential_energy(), uhf=0)
+        annotate_molecule_property(mol, "triplet_energy", calc, lambda x: x.get_potential_energy(), uhf=2)
+        return mol.GetDoubleProp("triplet_energy") - mol.GetDoubleProp("singlet_energy")
+    except Exception:
+        logger.exception("Failed to calculate singlet-triplet energy gap ")
+        return None
 
 
-# Timer code left blank pending Alexander's clarification on timing requirements
-def optimize(row):
+def optimize(row, t_nn):
     mol_id = row["ligand_identifier"]
-    existing_xyz = row.get("xyz")
+    z = row["z"]
+    ste = row["ste"]
 
-    # Check if already processed or failed
-    # TODO: Reconsider/define data source for tracking processed/failed items post-pipeline.
-    if existing_xyz is not None and existing_xyz != "":
-        if existing_xyz == "failed":
-            logger.info(f"Molecule {mol_id} previously failed. Skipping optimization.")
-        else:
-            logger.info(f"Molecule {mol_id} already processed. Skipping optimization.")
-        return existing_xyz
+    # Log the values of z and ste for debugging
+    logger.info(f"Processing molecule {mol_id} ...")
+
+    # Skip processing based on conditions
+    if z is None or abs(z) >= t_nn or ste is not None:
+        logger.info(f"Skipping xTB optimization on molecule {mol_id} based on z or t_ste conditions.")
+        return row  # Return the row unchanged
 
     mol = row["structure"]
 
     if pd.isna(mol) or Chem.MolFromMolBlock(mol) is None or Chem.MolFromMolBlock(mol).GetNumAtoms() > 200:
         logger.warning(f"Molecule {mol_id} is invalid or too large.")
-        return "failed"
+        row["xyz"] = "failed"
+        row["ste"] = None
+        return row  # Return the updated row
 
     mol = AddHs(Chem.MolFromMolBlock(mol))
     isomer = "fac"  # Example isomer, can be dynamically set if needed
@@ -58,10 +68,16 @@ def optimize(row):
             if bonds_maintained(mol) and isoctahedral(mol):
                 # Store the molecule in XYZ format in the DataFrame
                 logger.info(f"{mol_id} Go through check and will write to xyz")
-                return MolToXYZBlock(mol)
+                xyz_block = MolToXYZBlock(mol)
+                ste_score = calculate_ste(mol)
+                row["xyz"] = xyz_block
+                row["ste"] = ste_score
+                return row  # Return the updated row
             else:
-                logger.error(f"{mol_id} failed geometry check on attemp {attempt + 1}")
-                return "failed"
+                logger.error(f"{mol_id} failed geometry check on attempt {attempt + 1}")
+                row["xyz"] = "failed"
+                row["ste"] = None
+                return row  # Return the updated row
 
         except InputError:
             logger.error(f"InputError for {mol_id}, will attempt {3 - (attempt+1)} more times")
@@ -69,20 +85,29 @@ def optimize(row):
             continue
         except ValueError:
             logger.error(f"ValueError, probably because ConstrainedEmbed couldn't embed {mol_id}")
-            return "failed"
+            row["xyz"] = "failed"
+            row["ste"] = None
+            return row  # Return the updated row
         except Exception as e:
             logger.exception(f"Unhandled exception for {mol_id}: {str(e)}")
-            return "failed"
+            row["xyz"] = "failed"
+            row["ste"] = None
+            return row  # Return the updated row
 
 
-def optimize_geometries(df: pd.DataFrame) -> pd.DataFrame:
-    if "xyz" not in df.columns:
-        df["xyz"] = None
-    return df.assign(xyz=df.apply(optimize, axis=1))
+def optimize_geometries(df: pd.DataFrame, t_nn: float) -> pd.DataFrame:
+    # Apply the optimize function to each row
+    df = df.apply(optimize, axis=1, t_nn=t_nn)
+
+    return df
 
 
 OptimizeGeometriesTask = PipelineTask(
     "optimize_geometries",
     optimize_geometries,
-    batch_size=10,
+    context_kwargs={
+        "t_nn": "t_nn",
+    },
+    batch_size=4,
+    num_cpus=64,
 )
