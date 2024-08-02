@@ -50,7 +50,7 @@ class Net(t.nn.Module):
 
 
 def init_weights(m):
-    if type(m) == t.nn.Linear:
+    if isinstance(m, t.nn.Linear):
         kaiming_normal_(m.weight, nonlinearity="relu", mode="fan_out")
 
 
