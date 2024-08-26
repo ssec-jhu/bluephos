@@ -96,6 +96,11 @@ def optimize(row, t_nn):
 
 
 def optimize_geometries(df: pd.DataFrame, t_nn: float) -> pd.DataFrame:
+    
+    for col in ['xyz', 'ste']:
+        if col not in df.columns:
+            df[col] = None
+
     # Apply the optimize function to each row
     df = df.apply(optimize, axis=1, t_nn=t_nn)
 
@@ -108,6 +113,6 @@ OptimizeGeometriesTask = PipelineTask(
     context_kwargs={
         "t_nn": "t_nn",
     },
-    batch_size=4,
-    num_cpus=64,
+    batch_size=1,
+    num_cpus=1,
 )
