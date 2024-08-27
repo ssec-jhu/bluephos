@@ -82,8 +82,8 @@ def dft_run(df: pd.DataFrame, t_ste: float, dft_package: str) -> pd.DataFrame:
 
     dft_calculator = get_dft_calculator(dft_package, n_cpus)
 
-    if 'dft_energy_diff' not in df.columns:
-        df['dft_energy_diff'] = None
+    if "dft_energy_diff" not in df.columns:
+        df["dft_energy_diff"] = None
     df = df.apply(process_dataframe, axis=1, t_ste=t_ste, dft_calculator=dft_calculator)
     return df
 

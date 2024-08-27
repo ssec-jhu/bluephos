@@ -96,8 +96,7 @@ def optimize(row, t_nn):
 
 
 def optimize_geometries(df: pd.DataFrame, t_nn: float) -> pd.DataFrame:
-    
-    for col in ['xyz', 'ste']:
+    for col in ["xyz", "ste"]:
         if col not in df.columns:
             df[col] = None
 

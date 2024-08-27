@@ -68,7 +68,8 @@ def rerun_candidate_generator(input_dir, t_nn, t_ste):
         ]
         for _, row in filtered.iterrows():
             yield row.to_frame().transpose()
-            
+
+
 def ligand_smiles_reader_generator(ligand_smiles):
     ligand_df = pd.read_csv(ligand_smiles)
     for _, row in ligand_df.iterrows():
@@ -90,9 +91,8 @@ def get_generator(ligand_smiles, halides, acids, input_dir, t_nn, t_ste):
     return lambda: rerun_candidate_generator(input_dir, t_nn, t_ste)
 
 
-
 def get_pipeline(
-    ligand_smiles, # Path to the ligands CSV file
+    ligand_smiles,  # Path to the ligands CSV file
     halides,  # Path to the halides CSV file
     acids,  # Path to the acids CSV file
     element_features,  # Path to the element features file

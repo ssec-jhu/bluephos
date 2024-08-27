@@ -20,7 +20,7 @@ def mock_args():
         "element_features": features,
         "train_stats": train,
         "model_weights": weights,
-        "ligand_smiles":ligands
+        "ligand_smiles": ligands,
     }
 
 
