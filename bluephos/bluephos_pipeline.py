@@ -59,9 +59,7 @@ def rerun_candidate_generator(input_dir, t_nn, t_ste):
         DataFrame: A single-row DataFrame containing candidate data.
     """
     for file in Path(input_dir).glob("*.parquet"):
-        print(file.name)
         df = pd.read_parquet(file)
-
         df["ste"] = df["ste"].replace({None: np.nan})
 
         filtered = df[
