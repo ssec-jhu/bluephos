@@ -107,12 +107,9 @@ def apply_nn(feature_df: pd.DataFrame, model_weights) -> pd.DataFrame:
 
 
 def nn(df: pd.DataFrame, element_features, train_stats, model_weights) -> pd.DataFrame:
-    if "z" not in df.columns:
-        df["z"] = None
     df_structure = df[["ligand_identifier", "structure"]].dropna(subset=["structure"])
     feature_df = feature_create(df_structure, element_features, train_stats)
     nn_score_df = apply_nn(feature_df, model_weights)
-
     score_mapping = nn_score_df.set_index("mol_id")["z"]
     df["z"] = df["ligand_identifier"].map(score_mapping)
     logger.info("NN task complete")

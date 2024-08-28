@@ -2,6 +2,7 @@ __doc__ = """"BluePhos Discovery Pipeline"""
 
 from pathlib import Path
 import pandas as pd
+import numpy as np
 from dplutils import cli
 from dplutils.pipeline.ray import RayStreamGraphExecutor
 from bluephos.tasks.generateligandtable import GenerateLigandTableTask
@@ -58,7 +59,10 @@ def rerun_candidate_generator(input_dir, t_nn, t_ste):
         DataFrame: A single-row DataFrame containing candidate data.
     """
     for file in Path(input_dir).glob("*.parquet"):
+        print(file.name)
         df = pd.read_parquet(file)
+        
+        df["ste"] = df["ste"].replace({None: np.nan})
 
         filtered = df[
             (df["z"].notnull())
@@ -73,11 +77,7 @@ def rerun_candidate_generator(input_dir, t_nn, t_ste):
 def ligand_smiles_reader_generator(ligand_smiles):
     ligand_df = pd.read_csv(ligand_smiles)
     for _, row in ligand_df.iterrows():
-        ligand = {
-            "ligand_identifier": row["ligand_identifier"],
-            "ligand_SMILES": row["ligand_SMILES"],
-        }
-        yield pd.DataFrame([ligand])
+        yield row.to_frame().transpose()
 
 
 def get_generator(ligand_smiles, halides, acids, input_dir, t_nn, t_ste):
