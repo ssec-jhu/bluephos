@@ -69,11 +69,6 @@ def generate_ligand_table(
                     "halide_SMILES": ligand_pair["halide_SMILES"],
                     "acid_identifier": ligand_pair["acid_identifier"],
                     "acid_SMILES": ligand_pair["acid_SMILES"],
-                    "structure": None,
-                    "z": None,
-                    "xyz": None,
-                    "ste": None,
-                    "dft_energy_diff": None,
                 }
             )
 

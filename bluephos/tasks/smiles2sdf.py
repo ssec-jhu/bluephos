@@ -47,6 +47,9 @@ def ligate(ligands, metal_atom_element="Ir", metal_atom=None):
 def smiles_to_sdf(df: pd.DataFrame) -> pd.DataFrame:
     """Convert SMILES strings to SDF format and Add to Input dataframe"""
 
+    if "structure" not in df.columns:
+        df["structure"] = None
+
     for index, row in df.iterrows():
         ligand = MolFromSmiles(row["ligand_SMILES"])
         if ligand is not None:

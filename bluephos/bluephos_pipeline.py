@@ -2,6 +2,7 @@ __doc__ = """"BluePhos Discovery Pipeline"""
 
 from pathlib import Path
 import pandas as pd
+import numpy as np
 from dplutils import cli
 from dplutils.pipeline.ray import RayStreamGraphExecutor
 from bluephos.tasks.generateligandtable import GenerateLigandTableTask
@@ -59,6 +60,7 @@ def rerun_candidate_generator(input_dir, t_nn, t_ste):
     """
     for file in Path(input_dir).glob("*.parquet"):
         df = pd.read_parquet(file)
+        df["ste"] = df["ste"].replace({None: np.nan})
 
         filtered = df[
             (df["z"].notnull())
@@ -70,16 +72,25 @@ def rerun_candidate_generator(input_dir, t_nn, t_ste):
             yield row.to_frame().transpose()
 
 
-def get_generator(halides, acids, input_dir, t_nn, t_ste):
+def ligand_smiles_reader_generator(ligand_smiles):
+    ligand_df = pd.read_csv(ligand_smiles)
+    for _, row in ligand_df.iterrows():
+        yield row.to_frame().transpose()
+
+
+def get_generator(ligand_smiles, halides, acids, input_dir, t_nn, t_ste):
     """
     Get the appropriate generator based on the input directory presence.
     """
-    if not input_dir:
+    if ligand_smiles:
+        return lambda: ligand_smiles_reader_generator(ligand_smiles)
+    elif not input_dir:
         return lambda: ligand_pair_generator(halides, acids)
     return lambda: rerun_candidate_generator(input_dir, t_nn, t_ste)
 
 
 def get_pipeline(
+    ligand_smiles,  # Path to the ligands CSV file
     halides,  # Path to the halides CSV file
     acids,  # Path to the acids CSV file
     element_features,  # Path to the element features file
@@ -103,17 +114,25 @@ def get_pipeline(
             OptimizeGeometriesTask,
             DFTTask,
         ]
-        if not input_dir
+        if not (input_dir or ligand_smiles)  # input as halides and acids CSV files
         else [
             NNTask,
             OptimizeGeometriesTask,
             DFTTask,
         ]
+        if not ligand_smiles  # input as parquet files
+        else [
+            Smiles2SDFTask,
+            NNTask,
+            OptimizeGeometriesTask,
+            DFTTask,
+        ]  # input as ligand smiles CSV file
     )
-    generator = get_generator(halides, acids, input_dir, t_nn, t_ste)
+    generator = get_generator(ligand_smiles, halides, acids, input_dir, t_nn, t_ste)
     pipeline_executor = RayStreamGraphExecutor(graph=steps, generator=generator)
 
     context_dict = {
+        "ligand_smiles": ligand_smiles,
         "halides": halides,
         "acids": acids,
         "element_features": element_features,
@@ -131,6 +150,7 @@ def get_pipeline(
 
 if __name__ == "__main__":
     ap = cli.get_argparser(description=__doc__)
+    ap.add_argument("--ligand_smiles", required=False, help="CSV file containing ligand SMILES data")
     ap.add_argument("--halides", required=False, help="CSV file containing halides data")
     ap.add_argument("--acids", required=False, help="CSV file containing boronic acids data")
     ap.add_argument("--features", required=True, help="Element feature file")
@@ -152,6 +172,7 @@ if __name__ == "__main__":
     # Run the pipeline with the provided arguments
     cli.cli_run(
         get_pipeline(
+            args.ligand_smiles,
             args.halides,
             args.acids,
             args.features,
