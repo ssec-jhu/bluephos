@@ -97,5 +97,5 @@ DFTTask = PipelineTask(
         "dft_package": "dft_package",  #  Either "ase" or "orca"
     },
     batch_size=1,
-    num_cpus=10,
+    num_cpus=32,
 )
