@@ -161,7 +161,6 @@ if __name__ == "__main__":
     ap.add_argument("--input_dir", required=False, help="Directory containing input parquet files")
     ap.add_argument("--t_nn", type=float, required=False, default=1.5, help="Threshold for 'z' score (default: 1.5)")
     ap.add_argument("--t_ste", type=float, required=False, default=1.9, help="Threshold for 'ste' (default: 1.9)")
-    # ap.add_argument("--xtb", required=False, default="True", help="Option to disable xTB by --xtb False (default:True)")
     ap.add_argument("--no_xtb", action="store_false", dest="xtb", help="Disable xTB optimization (default: enabled)")
 
     ap.add_argument(
