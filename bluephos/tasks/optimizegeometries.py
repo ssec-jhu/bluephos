@@ -31,7 +31,7 @@ def calculate_ste(mol):
         return None
 
 
-def optimize(row, t_nn):
+def optimize(row, t_nn, xtb):
     mol_id = row["ligand_identifier"]
     z = row["z"]
     ste = row["ste"]
@@ -46,7 +46,8 @@ def optimize(row, t_nn):
 
     mol = row["structure"]
 
-    if pd.isna(mol) or Chem.MolFromMolBlock(mol) is None or Chem.MolFromMolBlock(mol).GetNumAtoms() > 200:
+    mol_obj = None if pd.isna(mol) else Chem.MolFromMolBlock(mol)
+    if not mol_obj or mol_obj.GetNumAtoms() > 200:
         logger.warning(f"Molecule {mol_id} is invalid or too large.")
         row["xyz"] = "failed"
         row["ste"] = None
@@ -60,10 +61,14 @@ def optimize(row, t_nn):
     for attempt in range(3):
         try:
             octahedral_embed(mol, isomer)
-            if XTB is not None:
-                optimize_geometry(mol, XTB(method="GFN2-xTB"), conformation_index=0, uhf=2)
+            if xtb:
+                if XTB is not None:
+                    logger.info("Proceeding with xTB functionality...")
+                    optimize_geometry(mol, XTB(method="GFN2-xTB"), conformation_index=0, uhf=2)
+                else:
+                    logger.error("Cannot proceed with xTB functionality because xtb is not installed.")
             else:
-                logger.error("Proceeding without xTB functionality.")
+                logger.info("Proceeding without xTB functionality...")
 
             if bonds_maintained(mol) and isoctahedral(mol):
                 # Store the molecule in XYZ format in the DataFrame
@@ -95,13 +100,13 @@ def optimize(row, t_nn):
             return row  # Return the updated row
 
 
-def optimize_geometries(df: pd.DataFrame, t_nn: float) -> pd.DataFrame:
+def optimize_geometries(df: pd.DataFrame, t_nn: float, xtb: bool) -> pd.DataFrame:
     for col in ["xyz", "ste"]:
         if col not in df.columns:
             df[col] = None
 
     # Apply the optimize function to each row
-    df = df.apply(optimize, axis=1, t_nn=t_nn)
+    df = df.apply(optimize, axis=1, t_nn=t_nn, xtb=xtb)
 
     return df
 
@@ -111,6 +116,7 @@ OptimizeGeometriesTask = PipelineTask(
     optimize_geometries,
     context_kwargs={
         "t_nn": "t_nn",
+        "xtb": "xtb",
     },
     batch_size=1,
     num_cpus=1,

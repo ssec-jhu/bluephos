@@ -98,6 +98,7 @@ def get_pipeline(
     model_weights,  # Path to the model weights file
     input_dir=None,  # Directory containing input parquet files(rerun). Defaults to None.
     dft_package="orca",  # DFT package to use. Defaults to "orca".
+    xtb=True,  # Enable xTb optimize geometries task. Defaults to True.
     t_nn=1.5,  # Threshold for 'z' score. Defaults to None
     t_ste=1.9,  # Threshold for 'ste'. Defaults to None
 ):
@@ -139,6 +140,7 @@ def get_pipeline(
         "train_stats": train_stats,
         "model_weights": model_weights,
         "dft_package": dft_package,
+        "xtb": xtb,
         "t_nn": t_nn,
         "t_ste": t_ste,
     }
@@ -159,6 +161,7 @@ if __name__ == "__main__":
     ap.add_argument("--input_dir", required=False, help="Directory containing input parquet files")
     ap.add_argument("--t_nn", type=float, required=False, default=1.5, help="Threshold for 'z' score (default: 1.5)")
     ap.add_argument("--t_ste", type=float, required=False, default=1.9, help="Threshold for 'ste' (default: 1.9)")
+    ap.add_argument("--no_xtb", action="store_false", dest="xtb", help="Disable xTB optimization (default: enabled)")
 
     ap.add_argument(
         "--dft_package",
@@ -180,6 +183,7 @@ if __name__ == "__main__":
             args.weights,
             args.input_dir,
             args.dft_package,
+            args.xtb,
             args.t_nn,
             args.t_ste,
         ),
