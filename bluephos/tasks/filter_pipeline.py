@@ -1,12 +1,13 @@
 import pandas as pd
 from dplutils.pipeline import PipelineTask
-from bluephos.modules.filter import FilterTask
 
 
 # Helper function to create both filter_in and filter_out tasks
 def filter(df: pd.DataFrame, column: str, threshold: float, filter_in=True) -> pd.DataFrame:
-    filter_task = FilterTask(column_name=column, threshold=threshold, filter_in=filter_in)
-    return filter_task.task(df)
+    filtered = df[column] < threshold
+    if filter_in:
+        return df[filtered]
+    return df[~filtered]
 
 
 # Dynamically create filter_in and filter_out tasks for NN
