@@ -115,37 +115,9 @@ def build_pipeline_graph(input_dir: str, ligand_smiles: str):
     Returns:
         list: A list of task tuples representing the pipeline graph.
     """
-    # Case 1: Input as halides and acids CSV files
-    if not (input_dir or ligand_smiles):
-        return [
-            (GenerateLigandTableTask, Smiles2SDFTask),  # Generate ligands, then convert SMILES to SDF
-            (Smiles2SDFTask, NNTask),  # Use SMILES to run NN prediction
-            (NNTask, FilterNNOutTask),  # NN filter "out" goes to sink
-            (NNTask, FilterNNInTask),  # NN filter "in" continues to the next task
-            (FilterNNInTask, OptimizeGeometriesTask),  # Optimize geometries for filtered ligands
-            (OptimizeGeometriesTask, FilterXTBOutTask),  # XTB filter "out" goes to sink
-            (OptimizeGeometriesTask, FilterXTBInTask),  # XTB filter "in" continues to the next task
-            (FilterXTBInTask, DFTTask),  # Run DFT calculation for filtered ligands
-            (DFTTask, FilterDFTOutTask),  # DFT filter "out" goes to sink
-            (DFTTask, FilterDFTInTask),  # DFT filter "in" could be processed further
-        ]
-
-    # Case 2: Use parquet files for rerun
-    if not ligand_smiles:
-        return [
-            (NNTask, FilterNNOutTask),  # NN filter "out" goes to sink
-            (NNTask, FilterNNInTask),  # NN filter "in" continues to the next task
-            (FilterNNInTask, OptimizeGeometriesTask),  # Optimize geometries for filtered ligands
-            (OptimizeGeometriesTask, FilterXTBOutTask),  # XTB filter "out" goes to sink
-            (OptimizeGeometriesTask, FilterXTBInTask),  # XTB filter "in" continues to the next task
-            (FilterXTBInTask, DFTTask),  # Run DFT calculation for filtered ligands
-            (DFTTask, FilterDFTOutTask),  # DFT filter "out" goes to sink
-            (DFTTask, FilterDFTInTask),  # DFT filter "in" could be processed further
-        ]
-
-    # Case 3: Input as ligand SMILES CSV file
-    return [
-        (Smiles2SDFTask, NNTask),  # Convert SMILES to SDF, then run NN prediction
+    full_pipeline = [
+        (GenerateLigandTableTask, Smiles2SDFTask),  # Generate ligands, then convert SMILES to SDF
+        (Smiles2SDFTask, NNTask),  # Use SMILES to run NN prediction
         (NNTask, FilterNNOutTask),  # NN filter "out" goes to sink
         (NNTask, FilterNNInTask),  # NN filter "in" continues to the next task
         (FilterNNInTask, OptimizeGeometriesTask),  # Optimize geometries for filtered ligands
@@ -155,6 +127,14 @@ def build_pipeline_graph(input_dir: str, ligand_smiles: str):
         (DFTTask, FilterDFTOutTask),  # DFT filter "out" goes to sink
         (DFTTask, FilterDFTInTask),  # DFT filter "in" could be processed further
     ]
+
+    if ligand_smiles:
+        return full_pipeline[1:]  # from NNTask (Case 1: Input as ligand SMILES CSV file)
+
+    if input_dir:
+        return full_pipeline[2:]  # from Smiles2SDFTask (Case 2: Use parquet files for rerun)
+
+    return full_pipeline  # from GenerateLigandTableTask (Case 3: Input as halides and acids CSV files)
 
 
 def get_pipeline(
@@ -211,7 +191,7 @@ if __name__ == "__main__":
     ap.add_argument("--input_dir", required=False, help="Directory containing input parquet files")
     ap.add_argument("--t_nn", type=float, required=False, default=1.5, help="Threshold for 'z' score (default: 1.5)")
     ap.add_argument("--t_ste", type=float, required=False, default=1.9, help="Threshold for 'ste' (default: 1.9)")
-    ap.add_argument("--t_dft", type=float, required=False, default=2.5, help="Threshold for 'ste' (default: 2.5)")
+    ap.add_argument("--t_dft", type=float, required=False, default=2.5, help="Threshold for 'dft' (default: 2.5)")
     ap.add_argument(
         "--no_xtb", action="store_false", dest="xtb", default=True, help="Disable xTB optimization (default: enabled)"
     )
