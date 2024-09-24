@@ -33,7 +33,6 @@ def calculate_ste(mol):
 
 def optimize(row, xtb):
     mol_id = row["ligand_identifier"]
-    z = row["z"]
     ste = row["ste"]
 
     # Log the values of z and ste for debugging

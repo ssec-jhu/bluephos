@@ -43,7 +43,6 @@ def get_dft_calculator(dft_package, n_cpus):
 # Process each row of the DataFrame to perform DFT calculations
 def process_dataframe(row, t_ste, dft_calculator):
     mol_id = row["ligand_identifier"]
-    ste = row["ste"]
     energy_diff = row["dft_energy_diff"]
 
     # Skip DFT processing if enery_diff already existed (re-run condition)
