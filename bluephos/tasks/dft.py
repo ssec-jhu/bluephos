@@ -46,9 +46,10 @@ def process_dataframe(row, t_ste, dft_calculator):
     ste = row["ste"]
     energy_diff = row["dft_energy_diff"]
 
-    # if ste is None or abs(ste) >= t_ste or energy_diff is not None:
-    #     logger.info(f"Skipping DFT on molecule {mol_id} based on z or t_ste conditions.")
-    #     return row
+    # Skip DFT processing if enery_diff already existed (re-run condition)
+    if energy_diff is not None:
+        logger.info(f"Skipping DFT on molecule {mol_id} because dft_energy_diff existed (re-run).")
+        return row  # Return the row unchanged
 
     if row["xyz"] not in ["failed", None]:
         base_name = row["ligand_identifier"]

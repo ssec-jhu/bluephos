@@ -39,10 +39,10 @@ def optimize(row, xtb):
     # Log the values of z and ste for debugging
     logger.info(f"Processing molecule {mol_id} ...")
 
-    # # Skip processing based on conditions
-    # if z is None or abs(z) >= t_nn or ste is not None:
-    #     logger.info(f"Skipping xTB optimization on molecule {mol_id} based on z or t_ste conditions.")
-    #     return row  # Return the row unchanged
+    # Skip processing if ste already existed (re-run condition)
+    if ste is not None:
+        logger.info(f"Skipping xTB optimization on molecule {mol_id} because t_ste existed (re-run).")
+        return row  # Return the row unchanged
 
     mol = row["structure"]
 
