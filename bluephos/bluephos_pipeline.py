@@ -65,16 +65,11 @@ def rerun_candidate_generator(input_dir, t_nn, t_ste, t_dft):
         2. and 'ste' is None or its absolute value is less than t_ste,
         3. and 'dft_energy_diff' is None.
 
-    Additional Context:
-    1. The row is only considered if 'z' is None or has an absolute value below the t_nn threshold.
-    2. If a row's 'ste' is None, then its 'dft_energy_diff' should also be None.
-    3. If any of the columns ('z', 'ste', or 'dft_energy_diff') are missing, the corresponding condition is ignored.
-
     Args:
         input_dir (str): Directory containing input parquet files.
         t_nn (float): Threshold for 'z' score.
         t_ste (float): Threshold for 'ste'.
-        t_dft (float): (Optional) Threshold for 'dft_energy_diff' (not currently used
+        t_dft (float): (Optional) Threshold for 'dft_energy_diff' (not currently used)
 
     Yields:
         DataFrame: A single-row DataFrame containing candidate data.
