@@ -31,14 +31,11 @@ def test_optimize(mock_optimize_geometry, mock_octahedral_embed, setup_dataframe
     mock_octahedral_embed.return_value = None  # Does not need to return anything
     mock_optimize_geometry.return_value = None  # Does not need to return anything
 
-    # Define a mock t_nn argument
-    mock_t_nn = 1.5  # Replace with a suitable value for t_nn
-
     # Define a mock xtb argument
     mock_xtb = True
 
     # Run optimize
-    output_dataframe = optimize_geometries(setup_dataframe, mock_t_nn, mock_xtb)
+    output_dataframe = optimize_geometries(setup_dataframe, mock_xtb)
 
     # Check if XYZ data was added or set to failed
     assert output_dataframe.loc[0, "xyz"] is not None
