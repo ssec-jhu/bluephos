@@ -81,21 +81,21 @@ After cloning, navigate to the project directory:
 &nbsp;&nbsp;-If neither a ligand SMILES CSV file nor an input directory is provided, the pipeline defaults to mode 1.
 
 # Example Commands
-1.	Generating Ligand Pairs and Running the Full Pipeline (Mode1):
+1.	Generating Ligand Pairs and Running the Full Pipeline (Mode1)  
 If you want to generate ligand pairs from halides and acids files and run the full pipeline, you must specify the paths to the halides and acids files:
 * ``python bluephos_pipeline.py --halides path/to/halides.csv --acids path/to/acids.csv --features path/to/features.csv --train path/to/train_stats.csv --weights path/to/model_weights.h5``
-2.	Rerunning the Pipeline with Existing Parquet Files (Mode2):
+2.	Rerunning the Pipeline with Existing Parquet Files (Mode2)  
 If you have already run the pipeline for the ligands and want to rerun it for refiltering or recalculating the ligands based on previous results:
 * ``python bluephos_pipeline.py --input_dir path/to/parquet_directory --features path/to/features.csv --train path/to/train_stats.csv --weights path/to/model_weights.h5``
-3.	Using Ligand SMILES CSV File (Mode 3):
+3.	Using Ligand SMILES CSV File (Mode 3)  
 * ``python bluephos_pipeline.py --ligand_smiles path/to/ligand_smiles.csv --features path/to/features.csv --train path/to/train_stats.csv --weights path/to/model_weights.h5``
-4.	Specifying Different Thresholds for NN and STE
+4.	Specifying Different Thresholds for NN and STE    
 You can adjust the thresholds for the neural network 'z' score and the xTB standard error (STE) as needed:
 * ``python bluephos_pipeline.py --halides path/to/halides.csv --acids path/to/acids.csv --features path/to/features.csv --train path/to/train_stats.csv --weights path/to/model_weights.h5 --t_nn 2.0 --t_ste 2.5``
-5.	Using a Different DFT Package
+5.	Using a Different DFT Package    
 By default, the pipeline uses the ORCA DFT package, but you can switch to ASE (to be implemented later) if preferred:
 * ``python bluephos_pipeline.py --halides path/to/halides.csv --acids path/to/acids.csv --features path/to/features.csv --train path/to/train_stats.csv --weights path/to/model_weights.h5 --dft_package ase``
-6. Disable xTB optimiazation
+6. Disable xTB optimiazation    
 By default, the geometries optimization task uses the xTB package.However you can disable it by running:
 * ``python bluephos_pipeline.py --halides path/to/halides.csv --acids path/to/acids.csv --features path/to/features.csv --train path/to/train_stats.csv --weights path/to/model_weights.h5 --no_xtb``
 
