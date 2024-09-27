@@ -80,7 +80,7 @@ After cloning, navigate to the project directory:
 &nbsp;&nbsp;-If an input directory (--input_dir) is specified, and no ligand SMILES CSV file is provided, the pipeline operates in mode 2.  
 &nbsp;&nbsp;-If neither a ligand SMILES CSV file nor an input directory is provided, the pipeline defaults to mode 1.
 
-# Example Commands
+## Example Commands
 1.	Generating Ligand Pairs and Running the Full Pipeline (Mode1)  
 If you want to generate ligand pairs from halides and acids files and run the full pipeline, you must specify the paths to the halides and acids files:
 * ``python bluephos_pipeline.py --halides path/to/halides.csv --acids path/to/acids.csv --features path/to/features.csv --train path/to/train_stats.csv --weights path/to/model_weights.h5``
