@@ -67,7 +67,7 @@ After cloning, navigate to the project directory:
 | --t_ste         | No           | Float    | 1.9         | Threshold for 'ste' (Singlet-Triplet Energy gap). Candidates with an absolute 'ste' value below this threshold will be considered. |
 | --t_dft         | No           | Float    | 2.0         | Threshold for 'dft' (dft_energy_diff). Candidates with an absolute 'dft' value below this threshold will be considered.            |
 | --ligand_smiles | No           | String   | None        | Path to the ligand SMILE file containing ligand SMILES data. If provided, mode 3 is used.                                          |
-| --no_xtb        | No           | Bool     | True        | Disable xTB optimization. Defaults (no this flag) to xTB optimization enabled; use --no_xtb to disable it.
+| --no_xtb        | No           | Bool     | True        | Disable xTB optimization. Defaults (no this flag) to xTB optimization enabled; use --no_xtb to disable it.                         |
 
 
 ## The BluePhos Discovery Pipeline now supports three modes of input data:
