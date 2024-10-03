@@ -118,7 +118,7 @@ This command uses test data to demonstrate the pipeline's functionality, ideal f
 # Result
 
 ## Note:
-* The default output (--o) dataframe is stored in Parquet format due to its efficient storage, faster data access, and enhanced support for complex data structures. 
+* The default output (-o or --output) dataframe is stored in Parquet format due to its efficient storage, faster data access, and enhanced support for complex data structures. 
 * The pipeline's results are organized by task, with filtered-out data stored in specific subdirectories within the /output directory. For example:  
 -The filtered-out data from the NN task is stored in /NN_filter_out.  
 -For the XTB task, the filtered-out data is saved in /XTB_filter_out.  
