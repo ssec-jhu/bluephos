@@ -69,7 +69,7 @@ def process_dataframe(row, t_ste, dft_calculator):
 
         start_time = time.time()
         with observer.timer("DFT_task_time"):
-                energy_diff = dft_calculator.extract_results(temp_dir, base_name, xyz_value)
+            energy_diff = dft_calculator.extract_results(temp_dir, base_name, xyz_value)
         end_time = time.time()
 
         row["dft_energy_diff"] = energy_diff
