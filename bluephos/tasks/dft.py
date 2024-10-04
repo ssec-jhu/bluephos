@@ -65,10 +65,8 @@ def process_dataframe(row, t_ste, dft_calculator):
     try:
         xyz_value = remove_second_row(row["xyz"])
         logger.info(f"Starting DFT calculation for {base_name}...")
-        #
         with observer.timer("DFT") as t:
             energy_diff = dft_calculator.extract_results(temp_dir, base_name, xyz_value)
-
         row["dft_energy_diff"] = energy_diff
         row["dft_walltime"] = t.accum
         return row
