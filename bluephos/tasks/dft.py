@@ -1,10 +1,12 @@
 import os
 import tempfile
+import time
 import multiprocessing
 import pandas as pd
 import bluephos.modules.log_config as log_config
 from bluephos.modules.dft_calculators import OrcaCalculator, ASECalculator, remove_second_row
 from dplutils.pipeline import PipelineTask
+from dplutils import observer
 
 # Setup logging and get a logger instance
 logger = log_config.setup_logging(__name__)
@@ -64,8 +66,14 @@ def process_dataframe(row, t_ste, dft_calculator):
     try:
         xyz_value = remove_second_row(row["xyz"])
         logger.info(f"Starting DFT calculation for {base_name}...")
-        energy_diff = dft_calculator.extract_results(temp_dir, base_name, xyz_value)
+
+        start_time = time.time()
+        with observer.timer("DFT_task_time"):
+                energy_diff = dft_calculator.extract_results(temp_dir, base_name, xyz_value)
+        end_time = time.time()
+
         row["dft_energy_diff"] = energy_diff
+        row["dft_walltime"] = end_time - start_time
         return row
     finally:
         if DEBUG:
@@ -84,6 +92,9 @@ def dft_run(df: pd.DataFrame, t_ste: float, dft_package: str) -> pd.DataFrame:
 
     if "dft_energy_diff" not in df.columns:
         df["dft_energy_diff"] = None
+
+    if "dft_walltime" not in df.columns:
+        df["dft_walltime"] = None
     df = df.apply(process_dataframe, axis=1, t_ste=t_ste, dft_calculator=dft_calculator)
     return df
 
