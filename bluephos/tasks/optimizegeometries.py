@@ -1,5 +1,5 @@
 import bluephos.modules.log_config as log_config
-from time import sleep, time
+from time import sleep
 import pandas as pd
 from ase.calculators.calculator import InputError
 from dplutils.pipeline import PipelineTask
@@ -64,11 +64,9 @@ def optimize(row, xtb):
             if xtb:
                 if XTB is not None:
                     logger.info("Proceeding with xTB functionality...")
-                    start_time = time()
-                    with observer.timer("xtb_walltime"):
+                    with observer.timer("XTB") as t:
                         optimize_geometry(mol, XTB(method="GFN2-xTB"), conformation_index=0, uhf=2)
-                    end_time = time()
-                    row["xtb_walltime"] = end_time - start_time
+                    row["xtb_walltime"] = t.accum
                 else:
                     logger.error("Cannot proceed with xTB functionality because xtb is not installed.")
             else:

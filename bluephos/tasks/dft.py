@@ -1,6 +1,5 @@
 import os
 import tempfile
-import time
 import multiprocessing
 import pandas as pd
 import bluephos.modules.log_config as log_config
@@ -66,14 +65,12 @@ def process_dataframe(row, t_ste, dft_calculator):
     try:
         xyz_value = remove_second_row(row["xyz"])
         logger.info(f"Starting DFT calculation for {base_name}...")
-
-        start_time = time.time()
-        with observer.timer("DFT_task_time"):
-                energy_diff = dft_calculator.extract_results(temp_dir, base_name, xyz_value)
-        end_time = time.time()
+        #
+        with observer.timer("DFT") as t:
+            energy_diff = dft_calculator.extract_results(temp_dir, base_name, xyz_value)
 
         row["dft_energy_diff"] = energy_diff
-        row["dft_walltime"] = end_time - start_time
+        row["dft_walltime"] = t.accum
         return row
     finally:
         if DEBUG:
