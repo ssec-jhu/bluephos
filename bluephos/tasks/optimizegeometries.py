@@ -3,6 +3,7 @@ from time import sleep
 import pandas as pd
 from ase.calculators.calculator import InputError
 from dplutils.pipeline import PipelineTask
+from dplutils import observer
 from rdkit import Chem
 from rdkit.Chem import AddHs, MolToXYZBlock
 from bluephos.modules.annotate_rdkit_with_ase import optimize_geometry, annotate_molecule_property
@@ -63,7 +64,9 @@ def optimize(row, xtb):
             if xtb:
                 if XTB is not None:
                     logger.info("Proceeding with xTB functionality...")
-                    optimize_geometry(mol, XTB(method="GFN2-xTB"), conformation_index=0, uhf=2)
+                    with observer.timer("XTB") as t:
+                        optimize_geometry(mol, XTB(method="GFN2-xTB"), conformation_index=0, uhf=2)
+                    row["xtb_walltime"] = t.accum
                 else:
                     logger.error("Cannot proceed with xTB functionality because xtb is not installed.")
             else:
@@ -75,6 +78,7 @@ def optimize(row, xtb):
                 xyz_block = MolToXYZBlock(mol)
                 ste_score = calculate_ste(mol)
                 row["xyz"] = xyz_block
+                row["xyz_len"] = len(xyz_block)
                 row["ste"] = ste_score
                 return row  # Return the updated row
             else:
@@ -100,7 +104,7 @@ def optimize(row, xtb):
 
 
 def optimize_geometries(df: pd.DataFrame, xtb: bool) -> pd.DataFrame:
-    for col in ["xyz", "ste"]:
+    for col in ["xyz", "ste", "xtb_walltime", "xyz_len"]:
         if col not in df.columns:
             df[col] = None
 
