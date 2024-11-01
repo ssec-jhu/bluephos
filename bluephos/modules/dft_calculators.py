@@ -1,8 +1,9 @@
+import logging
+import multiprocessing
 import os
 import subprocess
-import multiprocessing
-import logging
 from textwrap import dedent
+
 from bluephos.modules.dft_extract import extract
 
 # Constants

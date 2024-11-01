@@ -1,4 +1,3 @@
-
 # Contributing to the BluePhos Pipeline Project
 
 Thank you for your interest in contributing to the BluePhos pipeline project! As a contributor, you’ll work from your fork of the main repository. This document outlines the steps to set up your development environment, guidelines for coding, and instructions for submitting contributions.
@@ -6,6 +5,27 @@ Thank you for your interest in contributing to the BluePhos pipeline project! As
 ## Repository Information
 
 - **Main Repository**: [BluePhos Main Repo](https://github.com/ssec-jhu/bluephos.git)
+
+## How to Fork the Repository
+
+1. **Go to the Repository on GitHub**:
+   - Open your web browser and navigate to the main repository you want to fork. For the BluePhos pipeline, the URL is [https://github.com/ssec-jhu/bluephos.git](https://github.com/ssec-jhu/bluephos.git).
+
+2. **Click the Fork Button**:
+   - In the upper-right corner of the repository page, you’ll see a button labeled **Fork**. Click it. 
+   - GitHub will ask you to select your GitHub account or organization where you want the fork to be created.
+
+3. **Wait for the Fork to Complete**:
+   - GitHub will create a copy of the repository under your account. This new repository is your fork, and you’ll be directed to the forked repository page (e.g., `https://github.com/your-username/bluephos`).
+
+4. **Clone Your Fork Locally**:
+   - Once your fork is created, you can clone it to your local machine to start working:
+   ```bash
+   git clone https://github.com/your-username/bluephos.git
+   cd bluephos
+   ```
+
+You now have your own copy (fork) of the repository where you can make changes independently from the main repository. When you’re ready to contribute back, you can create a pull request from your fork to the main repository.
 
 ## Getting Started
 
@@ -29,7 +49,7 @@ Thank you for your interest in contributing to the BluePhos pipeline project! As
 
 ## Making Changes
 
-- **Coding Standards**: Follow PEP 8 for Python code. Use `ruff format` or `tox -e format` to ensure code formatting aligns with the repository’s requirements.
+- **Coding Standards**: Follow PEP 8 for Python code. Use `tox -e format` to ensure code formatting aligns with the repository’s requirements.
 - **Testing**: Ensure your changes pass all tests. Include relevant tests for any new features you add.
 - **Documentation**: Update the documentation for any significant code changes. This includes comments, docstrings, and relevant updates to the `README.md`.
 

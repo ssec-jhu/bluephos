@@ -1,12 +1,14 @@
-import bluephos.modules.log_config as log_config
 from time import sleep
+
 import pandas as pd
 from ase.calculators.calculator import InputError
-from dplutils.pipeline import PipelineTask
 from dplutils import observer
+from dplutils.pipeline import PipelineTask
 from rdkit import Chem
 from rdkit.Chem import AddHs, MolToXYZBlock
-from bluephos.modules.annotate_rdkit_with_ase import optimize_geometry, annotate_molecule_property
+
+import bluephos.modules.log_config as log_config
+from bluephos.modules.annotate_rdkit_with_ase import annotate_molecule_property, optimize_geometry
 from bluephos.modules.bond_length import bonds_maintained
 from bluephos.modules.isoctahedral import isoctahedral
 from bluephos.modules.octahedral_embed import octahedral_embed

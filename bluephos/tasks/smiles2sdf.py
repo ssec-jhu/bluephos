@@ -1,11 +1,12 @@
 from functools import reduce
+
 import pandas as pd
-import bluephos.modules.log_config as log_config
 from dplutils.pipeline import PipelineTask
 from rdkit import Chem
 from rdkit.Chem import AddHs, AllChem, MolFromSmiles
 from rdkit.Chem.rdmolops import CombineMols, Kekulize, SanitizeMol
 
+import bluephos.modules.log_config as log_config
 
 # Setup logging and get a logger instance
 logger = log_config.setup_logging(__name__)
