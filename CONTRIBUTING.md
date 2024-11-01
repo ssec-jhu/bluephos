@@ -67,7 +67,7 @@ When you’re ready to contribute your changes:
 
 1. **Commit Your Changes**: Write concise and descriptive commit messages.
    ```bash
-   git add .
+   git add -u # Use 'git add .' if adding new files
    git commit -m "Description of changes"
    ```
 
