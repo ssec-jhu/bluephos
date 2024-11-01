@@ -1,8 +1,10 @@
 import os
-import pytest
-import pandas as pd
 from unittest.mock import patch
-from bluephos.tasks.dft import dft_run, remove_second_row, OrcaCalculator
+
+import pandas as pd
+import pytest
+
+from bluephos.tasks.dft import OrcaCalculator, dft_run, remove_second_row
 
 
 @pytest.fixture
