@@ -11,6 +11,7 @@ license = {file = "LICENSE"}
 requires-python = ">=3.11"
 dependencies = [
     "pandas",
+    "dplutils>=0.8.0"
 ]
 
 [project.optional-dependencies]
