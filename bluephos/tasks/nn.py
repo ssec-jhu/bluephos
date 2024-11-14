@@ -1,13 +1,13 @@
 import pandas as pd
 import torch as t
 import torch.nn.functional as F
-import bluephos.modules.log_config as log_config
 from dplutils.pipeline import PipelineTask
 from torch.nn import Dropout, Linear
 from torch.nn.init import kaiming_normal_
 from torch_geometric.loader import DataLoader
 from torch_geometric.nn import GCN, Set2Set
 
+import bluephos.modules.log_config as log_config
 from bluephos.modules.sdf2feature import feature_create
 
 # Setup logging and get a logger instance

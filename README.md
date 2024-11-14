@@ -10,6 +10,7 @@
 
 BluePhos: An automated pipeline optimizing the synthesis and analysis of blue phosphorescent materials.
 
+
 # BluePhos Pipeline Introduction
 
 ### Overview
@@ -140,6 +141,9 @@ query_result = ddb.query('''SELECT * FROM '08ca147e-f618-11ee-b38f-eab1f408aca3-
 print(query_result.to_df())
 ```
 
+# Contributing
+
+We welcome contributions! Please see our [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on how to contribute to this project.
 
 
 

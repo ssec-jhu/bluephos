@@ -1,11 +1,13 @@
+import multiprocessing
 import os
 import tempfile
-import multiprocessing
+
 import pandas as pd
-import bluephos.modules.log_config as log_config
-from bluephos.modules.dft_calculators import OrcaCalculator, ASECalculator, remove_second_row
-from dplutils.pipeline import PipelineTask
 from dplutils import observer
+from dplutils.pipeline import PipelineTask
+
+import bluephos.modules.log_config as log_config
+from bluephos.modules.dft_calculators import ASECalculator, OrcaCalculator, remove_second_row
 
 # Setup logging and get a logger instance
 logger = log_config.setup_logging(__name__)

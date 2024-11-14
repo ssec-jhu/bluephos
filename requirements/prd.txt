@@ -1,5 +1,5 @@
 ase==3.23.0
-dplutils==0.5.5
+dplutils>=0.8.0
 pandas==2.2.2
 ray[default]==2.35.0
 rdkit_pypi==2022.9.5

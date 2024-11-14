@@ -1,6 +1,8 @@
 import re
-import numpy as np
 from glob import iglob
+
+import numpy as np
+
 import bluephos.modules.log_config as log_config
 
 # Setup logging and get a logger instance
