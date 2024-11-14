@@ -6,7 +6,10 @@ import numpy as np
 import pandas as pd
 from dplutils import cli
 from dplutils.pipeline.ray import RayStreamGraphExecutor
-
+from bluephos.tasks.generateligandtable import GenerateLigandTableTask
+from bluephos.tasks.nn import NNTask
+from bluephos.tasks.optimizegeometries import OptimizeGeometriesTask
+from bluephos.tasks.readmol2 import Smiles2SDFTask
 from bluephos.tasks.dft import DFTTask
 from bluephos.tasks.filter_pipeline import (
     FilterDFTInTask,
