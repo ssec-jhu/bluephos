@@ -1,12 +1,14 @@
 import os.path
+
 from rdkit import Chem
-from rdkit.Chem.rdchem import RWMol, Conformer
-from rdkit.Chem.rdmolfiles import MolFromMol2File, MolFromSmarts
 from rdkit.Chem.AllChem import ConstrainedEmbed
+from rdkit.Chem.rdchem import Conformer, RWMol
 from rdkit.Chem.rdChemReactions import ReactionFromSmarts
+from rdkit.Chem.rdmolfiles import MolFromMol2File, MolFromSmarts
 from rdkit.Chem.rdmolops import RemoveStereochemistry
 
-def make_bonds_dative(mol, target_elem = "Ir"):
+
+def make_bonds_dative(mol, target_elem="Ir"):
     editable_mol = RWMol(mol)
 
     # If you don't make a list, it loops infinitely over the bonds it's creating
@@ -14,30 +16,38 @@ def make_bonds_dative(mol, target_elem = "Ir"):
         iridium = None
         nitrogen = None
         carbene = None
-        if bond.GetBeginAtom().GetSymbol() == target_elem and \
-                bond.GetEndAtom().GetSymbol() in ["N", "P"] and \
-                bond.GetEndAtom().GetFormalCharge() == 1:
+        if (
+            bond.GetBeginAtom().GetSymbol() == target_elem
+            and bond.GetEndAtom().GetSymbol() in ["N", "P"]
+            and bond.GetEndAtom().GetFormalCharge() == 1
+        ):
             iridium = bond.GetBeginAtom()
             nitrogen = bond.GetEndAtom()
             start_idx = bond.GetEndAtomIdx()
             end_idx = bond.GetBeginAtomIdx()
-        elif bond.GetEndAtom().GetSymbol() == target_elem and \
-                bond.GetBeginAtom().GetSymbol() in ["N", "P"] and \
-                bond.GetBeginAtom().GetFormalCharge() == 1:
+        elif (
+            bond.GetEndAtom().GetSymbol() == target_elem
+            and bond.GetBeginAtom().GetSymbol() in ["N", "P"]
+            and bond.GetBeginAtom().GetFormalCharge() == 1
+        ):
             iridium = bond.GetEndAtom()
             nitrogen = bond.GetBeginAtom()
             start_idx = bond.GetBeginAtomIdx()
             end_idx = bond.GetEndAtomIdx()
-        if bond.GetBeginAtom().GetSymbol() == target_elem and \
-                bond.GetEndAtom().GetSymbol() == "C" and \
-                bond.GetEndAtom().GetTotalValence() == 3:
+        if (
+            bond.GetBeginAtom().GetSymbol() == target_elem
+            and bond.GetEndAtom().GetSymbol() == "C"
+            and bond.GetEndAtom().GetTotalValence() == 3
+        ):
             iridium = bond.GetBeginAtom()
             carbene = bond.GetEndAtom()
             start_idx = bond.GetEndAtomIdx()
             end_idx = bond.GetBeginAtomIdx()
-        elif bond.GetEndAtom().GetSymbol() == target_elem and \
-                bond.GetBeginAtom().GetSymbol() == "C" and \
-                bond.GetBeginAtom().GetTotalValence() == 3:
+        elif (
+            bond.GetEndAtom().GetSymbol() == target_elem
+            and bond.GetBeginAtom().GetSymbol() == "C"
+            and bond.GetBeginAtom().GetTotalValence() == 3
+        ):
             iridium = bond.GetEndAtom()
             carbene = bond.GetBeginAtom()
             start_idx = bond.GetBeginAtomIdx()
@@ -56,16 +66,18 @@ def make_bonds_dative(mol, target_elem = "Ir"):
 
     return outmol
 
-def transfer_conformation(mol, substruct, conformer = 0):
-    '''Given a molecule, and a second molecule which is a substructure of the
+
+def transfer_conformation(mol, substruct, conformer=0):
+    """Given a molecule, and a second molecule which is a substructure of the
     first, assign coordinates to the substructure based on the matching part of
-    the original molecule'''
+    the original molecule"""
     match = mol.GetSubstructMatch(substruct)
     substruct_conformation = Conformer(substruct.GetNumAtoms())
     for i, index in enumerate(match):
         point = mol.GetConformer(conformer).GetAtomPosition(index)
         substruct_conformation.SetAtomPosition(i, point)
     substruct.AddConformer(substruct_conformation)
+
 
 fac = make_bonds_dative(MolFromMol2File(os.path.join(__path__[0], "OHUZEW.mol2")))
 RemoveStereochemistry(fac)
@@ -78,6 +90,7 @@ carbene_fac = make_bonds_dative(MolFromMol2File(os.path.join(__path__[0], "MAXYI
 RemoveStereochemistry(carbene_fac)
 carbene_mer = make_bonds_dative(MolFromMol2File(os.path.join(__path__[0], "MAXYOA.mol2")))
 RemoveStereochemistry(carbene_mer)
+
 
 # Extract skeletons of a molecule based on a template, keeping coordinates
 # Multiple skeletons because I don't know how to do wildcards
@@ -96,49 +109,68 @@ def skeleton(template, mol):
     skeleton_mol = editable_mol.GetMol()
     return skeleton_mol
 
+
 fac_skeleton = skeleton(template, fac)
 mer_skeleton = skeleton(template, mer)
 
 # Making the carbene skeletons in a completely different way
 # I probably am going to want to do this for all of them
-carbene_skeleton_smarts = "[Ir]135(<-[CH0](~N(~*)~*~2)~N(~*~2)~c~c~1)(<-[CH0](~N(~*)~*~4)~N(~*~4)~c~c~3)(<-[CH0](~N(~*)~*~6)~N(~*~6)~c~c~5)"
+carbene_skeleton_smarts = (
+    "[Ir]135(<-[CH0](~N(~*)~*~2)~N(~*~2)~c~c~1)(<-[CH0](~N(~*)~*~4)~N(~*~4)~c~c~3)(<-[CH0](~N(~*)~*~6)~N(~*~6)~c~c~5)"
+)
 carbene_fac_skeleton = MolFromSmarts(carbene_skeleton_smarts)
 transfer_conformation(carbene_fac, carbene_fac_skeleton)
 carbene_mer_skeleton = MolFromSmarts(carbene_skeleton_smarts)
 transfer_conformation(carbene_mer, carbene_mer_skeleton)
 
+
 def run_three_times(mol, reaction):
     for i in range(3):
         mol = reaction.RunReactants([mol])[0][0]
     return mol
+
+
 reactions = [
     ReactionFromSmarts("[Ir:1]1<-[n:2]:[n:3]~[c:4]:[c:5]~1>>[Ir:1]1<-[n:2]:[c:3]~[n:4]:[c:5]~1"),
     ReactionFromSmarts("[Ir:1]1<-[n:2]:[n:3]~[c:4]:[c:5]~1>>[Ir:1]1<-[n:2]:[n:3]~[n:4]:[c:5]~1"),
-    ReactionFromSmarts("[Ir:1]1<-[n:2]:[n:3]~[c:4]:[c:5]~1>>[Ir:1]1<-[n:2]:[c:3]~[c:4]:[c:5]~1")
+    ReactionFromSmarts("[Ir:1]1<-[n:2]:[n:3]~[c:4]:[c:5]~1>>[Ir:1]1<-[n:2]:[c:3]~[c:4]:[c:5]~1"),
 ]
-fac_skeletons = [fac_skeleton] + [run_three_times(fac_skeleton, reaction) for reaction in reactions] + [carbene_fac_skeleton]
-mer_skeletons = [mer_skeleton] + [run_three_times(mer_skeleton, reaction) for reaction in reactions] + [carbene_mer_skeleton]
+fac_skeletons = (
+    [fac_skeleton] + [run_three_times(fac_skeleton, reaction) for reaction in reactions] + [carbene_fac_skeleton]
+)
+mer_skeletons = (
+    [mer_skeleton] + [run_three_times(mer_skeleton, reaction) for reaction in reactions] + [carbene_mer_skeleton]
+)
 
 # Skeletons for tridentate carbenes
 # I may have to remake these later if I want to control the isomers
 # For now I think it doesn't matter because all the carbene ligands are symmetric?
 # For homoleptic:
 biplet = make_bonds_dative(MolFromMol2File(os.path.join(__path__[0], "BIPLET.mol2")))
-biplet_skeleton = MolFromSmarts('[Ir]1234(~[#6](~[#7](~[#6])~[#6])~[#7]~c~c~1~c~[#7]~[#6](~[#7](~[#6])~[#6])~2)~[#6](~[#7](~[#6])~[#6])~[#7]~c~c~3~c~[#7]~[#6](~[#7](~[#6])~[#6])~4')
+biplet_skeleton = MolFromSmarts(
+    "[Ir]1234(~[#6](~[#7](~[#6])~[#6])~[#7]~c~c~1~c~[#7]~[#6](~[#7](~[#6])~[#6])~2)~[#6](~[#7](~[#6])~[#6])~[#7]~c~c~3~c~[#7]~[#6](~[#7](~[#6])~[#6])~4"
+)
 transfer_conformation(biplet, biplet_skeleton)
 # For heteroleptic, three with counterligands of different size
 soynom = make_bonds_dative(MolFromMol2File(os.path.join(__path__[0], "SOYNOM.mol2")))
 RemoveStereochemistry(soynom)
-soynom_skeleton = MolFromSmarts('[Ir]1234(~*~*~*~*~1~*~*~*~2)~[#6](~[#7](~[#6])~[#6])~[#7]~c~c~3~c~[#7]~[#6](~[#7](~[#6])~[#6])~4')
+soynom_skeleton = MolFromSmarts(
+    "[Ir]1234(~*~*~*~*~1~*~*~*~2)~[#6](~[#7](~[#6])~[#6])~[#7]~c~c~3~c~[#7]~[#6](~[#7](~[#6])~[#6])~4"
+)
 transfer_conformation(soynom, soynom_skeleton)
 uyokur = make_bonds_dative(MolFromMol2File(os.path.join(__path__[0], "UYOKUR.mol2")))
-uyokur_skeleton = MolFromSmarts('[Ir]1234(~*~*~*~*~*~1~*~*~*~2)~[#6](~[#7](~[#6])~[#6])~[#7]~c~c~3~c~[#7]~[#6](~[#7](~[#6])~[#6])~4')
+uyokur_skeleton = MolFromSmarts(
+    "[Ir]1234(~*~*~*~*~*~1~*~*~*~2)~[#6](~[#7](~[#6])~[#6])~[#7]~c~c~3~c~[#7]~[#6](~[#7](~[#6])~[#6])~4"
+)
 transfer_conformation(uyokur, uyokur_skeleton)
 egufiz = make_bonds_dative(MolFromMol2File(os.path.join(__path__[0], "EGUFIZ.mol2")))
-egufiz_skeleton = MolFromSmarts('[Ir]1234(~*~*~*~*~*~1~*~*~*~*~2)~[#6](~[#7](~[#6])~[#6])~[#7]~c~c~3~c~[#7]~[#6](~[#7](~[#6])~[#6])~4')
+egufiz_skeleton = MolFromSmarts(
+    "[Ir]1234(~*~*~*~*~*~1~*~*~*~*~2)~[#6](~[#7](~[#6])~[#6])~[#7]~c~c~3~c~[#7]~[#6](~[#7](~[#6])~[#6])~4"
+)
 transfer_conformation(egufiz, egufiz_skeleton)
 # Homoleptic has to go first, since a later pattern can cover it
 tridentate_skeletons = [biplet_skeleton, soynom_skeleton, uyokur_skeleton, egufiz_skeleton]
+
 
 def octahedral_embed(mol, isomer):
     # Needed for some of the mol2 files I got from CSD
@@ -151,7 +183,7 @@ def octahedral_embed(mol, isomer):
     elif isomer == "tridentate":
         skeletons = tridentate_skeletons
     else:
-        raise ValueError(f"Isomer should be \"mer\" or \"fac\", given {isomer}")
+        raise ValueError(f'Isomer should be "mer" or "fac", given {isomer}')
     finished = False
     for skeleton in skeletons:
         if len(mol.GetSubstructMatch(skeleton)) > 0:
@@ -160,7 +192,7 @@ def octahedral_embed(mol, isomer):
             # with a small template the imidazole is hroribly twisted, probably
             # because it thinks the atoms are aliphatic. Ignoring smoothing
             # failures with the large template, it works
-            ConstrainedEmbed(mol, skeleton, ignoreSmoothingFailures = True)
+            ConstrainedEmbed(mol, skeleton, ignoreSmoothingFailures=True)
             finished = True
     if not finished:
         raise ValueError("Doesn't match templates")
