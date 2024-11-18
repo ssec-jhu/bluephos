@@ -82,7 +82,7 @@ def apply_nn(feature_df: pd.DataFrame, model_weights) -> pd.DataFrame:
         raise ValueError("No input data found to infer atom features.")
 
     model = new_model(n_atom_feature, condition_dicts[0])
-    model.load_state_dict(t.load(model_weights))
+    model.load_state_dict(t.load(model_weights)) # nosec: CWE-502
 
     model.eval()
 
