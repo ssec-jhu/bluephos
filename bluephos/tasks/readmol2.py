@@ -30,6 +30,7 @@ def smiles_to_sdf(df: pd.DataFrame) -> pd.DataFrame:
             df.at[index, "structure"] = mol_block
         else:
             logger.warning(f"mol generation failed for index {index}, identifier {row['mol_id']}.")
+    df.rename(columns={'smiles':'ligand_SMILES', 'mol_id':'ligand_identifier'}, inplace=True)
     return df
 
 

@@ -22,7 +22,7 @@ from bluephos.tasks.filter_pipeline import (
 from bluephos.tasks.generateligandtable import GenerateLigandTableTask
 from bluephos.tasks.nn import NNTask
 from bluephos.tasks.optimizegeometries import OptimizeGeometriesTask
-from bluephos.tasks.smiles2sdf import Smiles2SDFTask
+#from bluephos.tasks.smiles2sdf import Smiles2SDFTask
 
 
 def ligand_pair_generator(halides_file, acids_file):

@@ -56,7 +56,8 @@ def optimize(row, xtb):
         return row  # Return the updated row
 
     mol = AddHs(Chem.MolFromMolBlock(mol))
-    isomer = "fac"  # Example isomer, can be dynamically set if needed
+    #isomer = "fac"  # Example isomer, can be dynamically set if needed
+    isomer = 'tridentate'
     mol_id = mol.GetProp("_Name") + f"_{isomer}"
     mol.SetProp("_Name", mol_id)
 
