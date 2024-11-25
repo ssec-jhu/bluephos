@@ -152,7 +152,7 @@ def get_pipeline(
     t_nn=1.5,  # Threshold for 'z' score.
     t_ste=1.9,  # Threshold for 'ste'.
     t_dft=2.5,  # Threshold for 'dft'.
-    isomer="fac",  #default isomer
+    isomer="fac",  # default isomer
 ):
     """
     Set up and return the BluePhos discovery pipeline executor
@@ -207,7 +207,12 @@ if __name__ == "__main__":
         choices=["orca", "ase"],
         help="DFT package to use (default: orca)",
     )
-    ap.add_argument("--isomer", required=False, default="fac", help="Set the isomer type for the OptimizeGeometriesTask (e.g., mer, fac)")
+    ap.add_argument(
+        "--isomer",
+        required=False,
+        default="fac",
+        help="Set the isomer type for the OptimizeGeometriesTask (e.g., mer, fac)",
+    )
     args = ap.parse_args()
 
     # Run the pipeline with the provided arguments

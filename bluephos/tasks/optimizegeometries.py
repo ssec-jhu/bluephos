@@ -104,7 +104,7 @@ def optimize(row, xtb, isomer):
             return row  # Return the updated row
 
 
-def optimize_geometries(df: pd.DataFrame, xtb: bool, isomer:str) -> pd.DataFrame:
+def optimize_geometries(df: pd.DataFrame, xtb: bool, isomer: str) -> pd.DataFrame:
     for col in ["xyz", "ste", "xtb_walltime", "xyz_len"]:
         if col not in df.columns:
             df[col] = None
@@ -120,7 +120,7 @@ OptimizeGeometriesTask = PipelineTask(
     optimize_geometries,
     context_kwargs={
         "xtb": "xtb",
-        "isomer":"isomer",
+        "isomer": "isomer",
     },
     batch_size=1,
     num_cpus=1,
