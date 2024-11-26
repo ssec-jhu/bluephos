@@ -33,9 +33,14 @@ def test_optimize(mock_optimize_geometry, mock_octahedral_embed, setup_dataframe
 
     # Define a mock xtb argument
     mock_xtb = True
+    
+    # Define a mock isomer argument
+    mock_isomer = 'fac'
 
     # Run optimize
-    output_dataframe = optimize_geometries(setup_dataframe, mock_xtb)
+    output_dataframe = optimize_geometries(setup_dataframe, mock_xtb, mock_isomer)
 
     # Check if XYZ data was added or set to failed
     assert output_dataframe.loc[0, "xyz"] is not None
+    
+
