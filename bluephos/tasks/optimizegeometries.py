@@ -34,12 +34,12 @@ def calculate_ste(mol):
         return None
 
 
-def optimize(row, xtb):
+def optimize(row, xtb, isomer):
     mol_id = row["ligand_identifier"]
     ste = row["ste"]
 
-    # Log the values of z and ste for debugging
-    logger.info(f"Processing molecule {mol_id} ...")
+    # Log the value of isomer for debugging
+    logger.info(f"Processing molecule {mol_id} with isomer '{isomer}'...")
 
     # Skip processing if ste already existed (re-run condition)
     if ste is not None:
@@ -56,7 +56,6 @@ def optimize(row, xtb):
         return row  # Return the updated row
 
     mol = AddHs(Chem.MolFromMolBlock(mol))
-    isomer = "fac"  # Example isomer, can be dynamically set if needed
     mol_id = mol.GetProp("_Name") + f"_{isomer}"
     mol.SetProp("_Name", mol_id)
 
@@ -105,13 +104,13 @@ def optimize(row, xtb):
             return row  # Return the updated row
 
 
-def optimize_geometries(df: pd.DataFrame, xtb: bool) -> pd.DataFrame:
+def optimize_geometries(df: pd.DataFrame, xtb: bool, isomer: str) -> pd.DataFrame:
     for col in ["xyz", "ste", "xtb_walltime", "xyz_len"]:
         if col not in df.columns:
             df[col] = None
 
     # Apply the optimize function to each row
-    df = df.apply(optimize, axis=1, xtb=xtb)
+    df = df.apply(optimize, axis=1, xtb=xtb, isomer=isomer)
 
     return df
 
@@ -121,6 +120,7 @@ OptimizeGeometriesTask = PipelineTask(
     optimize_geometries,
     context_kwargs={
         "xtb": "xtb",
+        "isomer": "isomer",
     },
     batch_size=1,
     num_cpus=1,
