@@ -1,6 +1,5 @@
 name: blue_env
 channels:
-  - anaconda
   - pytorch
   - conda-forge
   - defaults
