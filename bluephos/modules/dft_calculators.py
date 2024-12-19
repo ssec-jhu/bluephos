@@ -112,14 +112,13 @@ def create_orca_input_files(temp_dir, xyz_value):
 
 
 def run_orca_command(input_file, output_file, orca_path):
-    
     """
     Run the ORCA command with MPI-related options and log outputs.
     """
     # Get the hostname and configure MPI options
     task_host = socket.gethostname()
     mpi_options = ["--host", task_host, "--oversubscribe"]
-    
+
     command = [orca_path, input_file, f'{" ".join(mpi_options)}']
     print("Command to be executed:", " ".join(command))
     with open(output_file, "w") as output:
