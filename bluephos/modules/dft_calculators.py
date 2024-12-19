@@ -2,6 +2,7 @@ import logging
 import multiprocessing
 import os
 import subprocess
+import socket
 from textwrap import dedent
 
 from bluephos.modules.dft_extract import extract
@@ -111,10 +112,16 @@ def create_orca_input_files(temp_dir, xyz_value):
 
 
 def run_orca_command(input_file, output_file, orca_path):
+    
     """
-    Run the ORCA command and log outputs.
+    Run the ORCA command with MPI-related options and log outputs.
     """
-    command = [orca_path, input_file]
+    # Get the hostname and configure MPI options
+    task_host = socket.gethostname()
+    mpi_options = ["--host", task_host, "--oversubscribe"]
+    
+    command = [orca_path, input_file, f'{" ".join(mpi_options)}']
+    print("Command to be executed:", " ".join(command))
     with open(output_file, "w") as output:
         result = subprocess.run(command, stdout=output, stderr=subprocess.PIPE, check=True, text=True)
         if result.stderr:  # Check if stderr is not empty
