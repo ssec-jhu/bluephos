@@ -1,9 +1,9 @@
 import logging
 import multiprocessing
 import os
+import socket
 import subprocess
 from textwrap import dedent
-import socket
 
 from bluephos.modules.dft_extract import extract
 
