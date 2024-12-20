@@ -3,6 +3,7 @@ import multiprocessing
 import os
 import subprocess
 from textwrap import dedent
+import socket
 
 from bluephos.modules.dft_extract import extract
 
@@ -114,7 +115,10 @@ def run_orca_command(input_file, output_file, orca_path):
     """
     Run the ORCA command and log outputs.
     """
-    command = [orca_path, input_file]
+    this_host = socket.gethostname()
+    mpi_options = f"--oversubscribe --host {this_host}"
+    command = [orca_path, input_file, mpi_options]
+    logging.info(f"Running ORCA command: {command}")
     with open(output_file, "w") as output:
         result = subprocess.run(command, stdout=output, stderr=subprocess.PIPE, check=True, text=True)
         if result.stderr:  # Check if stderr is not empty
