@@ -89,7 +89,7 @@ def optimize(row, xtb, isomer):
                 return row  # Return the updated row
 
         except InputError:
-            logger.error(f"InputError for {mol_id}, will attempt {3 - (attempt+1)} more times")
+            logger.error(f"InputError for {mol_id}, will attempt {3 - (attempt + 1)} more times")
             sleep(10)
             continue
         except ValueError:
