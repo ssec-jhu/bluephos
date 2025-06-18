@@ -3,5 +3,5 @@ dplutils>=0.8.0
 pandas==2.2.3
 ray[default]==2.46.0
 rdkit_pypi==2022.9.5
-torch==2.7.0
+torch==2.7.1
 torch_geometric==2.6.1
