@@ -1,4 +1,4 @@
-pytest==8.4.1
+pytest==8.4.2
 pytest-cov==6.2.1
-bandit==1.8.5
-ruff==0.12.1
+bandit==1.8.6
+ruff==0.13.2

@@ -1,7 +1,7 @@
-ase==3.25.0
+ase==3.26.0
 dplutils>=0.8.0
-pandas==2.3.0
-ray[default]==2.47.1
+pandas==2.3.3
+ray[default]==2.49.2
 rdkit_pypi==2022.9.5
-torch==2.7.1
+torch==2.8.0
 torch_geometric==2.6.1
